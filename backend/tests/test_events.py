@@ -1,7 +1,6 @@
 import pytest
 from httpx import AsyncClient
 
-
 EVENT_PAYLOAD = {
     "name": "MAM Pivko #1",
     "date": "2024-06-15T18:00:00Z",

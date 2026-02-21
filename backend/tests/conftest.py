@@ -2,9 +2,8 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from mam_pivko.api.app import create_app
-from mam_pivko.db import get_db
 import mam_pivko.db as db_module
+from mam_pivko.api.app import create_app
 
 TEST_DB_NAME = "mam_pivko_test"
 
