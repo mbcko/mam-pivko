@@ -230,7 +230,7 @@ export default function EventForm() {
               className={styles.fromWishlistBtn}
               disabled={wishlist.length === 0}
             >
-              ⭐ Ze wishlistu {wishlist.length > 0 && `(${wishlist.length})`}
+              ⭐ Z wishlistu {wishlist.length > 0 && `(${wishlist.length})`}
             </button>
           </div>
         </fieldset>
