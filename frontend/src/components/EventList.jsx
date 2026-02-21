@@ -1,0 +1,60 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { api } from "../api.js";
+import styles from "./EventList.module.css";
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString("cs-CZ", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export default function EventList() {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    api
+      .listEvents()
+      .then(setEvents)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <h1>🍺 MAM Pivko</h1>
+        <Link to="/events/new" className={styles.newBtn}>
+          + Nová akce
+        </Link>
+      </header>
+
+      {loading && <p>Načítám...</p>}
+      {error && <p className={styles.error}>Chyba: {error}</p>}
+
+      {!loading && !error && events.length === 0 && (
+        <p className={styles.empty}>Zatím žádné akce. Naplánuj první!</p>
+      )}
+
+      <ul className={styles.list}>
+        {events.map((event) => (
+          <li key={event._id} className={styles.item}>
+            <Link to={`/events/${event._id}`}>
+              <div className={styles.date}>{formatDate(event.date)}</div>
+              <div className={styles.title}>
+                {event.name || `MAM Pivko — ${event.organizer}`}
+              </div>
+              <div className={styles.meta}>
+                Organizátor: {event.organizer} · {event.pubs.length} hospod
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
