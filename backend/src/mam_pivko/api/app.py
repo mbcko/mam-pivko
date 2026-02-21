@@ -11,9 +11,9 @@ from mam_pivko.db import close_client, get_client
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    get_client()  # ensure client is created on startup
+    get_client()
     yield
-    await close_client()
+    close_client()
 
 
 def create_app() -> FastAPI:
