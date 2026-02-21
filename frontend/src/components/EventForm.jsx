@@ -20,9 +20,15 @@ export default function EventForm() {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [organizerSelect, setOrganizerSelect] = useState("");
+  const [wishlist, setWishlist] = useState([]);
+  const [showWishlistPicker, setShowWishlistPicker] = useState(false);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    api.listWishlist().then(setWishlist).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -64,6 +70,16 @@ export default function EventForm() {
 
   function addPub() {
     setForm((f) => ({ ...f, pubs: [...f.pubs, { ...EMPTY_PUB }] }));
+  }
+
+  function pickFromWishlist(item) {
+    setForm((f) => ({
+      ...f,
+      pubs: [...f.pubs, { name: item.name, address: item.address, notes: item.notes, url: item.url }],
+    }));
+    setWishlist((w) => w.filter((i) => i._id !== item._id));
+    api.deleteWishlistItem(item._id).catch(() => {});
+    if (wishlist.length === 1) setShowWishlistPicker(false);
   }
 
   function removePub(index) {
@@ -204,10 +220,44 @@ export default function EventForm() {
             </div>
           ))}
 
-          <button type="button" onClick={addPub} className={styles.addPub}>
-            + Přidat hospodu
-          </button>
+          <div className={styles.pubButtons}>
+            <button type="button" onClick={addPub} className={styles.addPub}>
+              + Přidat hospodu
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowWishlistPicker(true)}
+              className={styles.fromWishlistBtn}
+              disabled={wishlist.length === 0}
+            >
+              ⭐ Ze wishlistu {wishlist.length > 0 && `(${wishlist.length})`}
+            </button>
+          </div>
         </fieldset>
+
+        {showWishlistPicker && (
+          <div className={styles.modalOverlay} onClick={() => setShowWishlistPicker(false)}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+              <h2>Vybrat z wishlistu</h2>
+              <ul className={styles.wishlistPickList}>
+                {wishlist.map((item) => (
+                  <li key={item._id}>
+                    <div className={styles.pickItemInfo}>
+                      <div className={styles.pickItemName}>{item.name}</div>
+                      {item.address && <div className={styles.pickItemAddr}>{item.address}</div>}
+                    </div>
+                    <button type="button" onClick={() => pickFromWishlist(item)} className={styles.pickBtn}>
+                      + Přidat
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <button type="button" onClick={() => setShowWishlistPicker(false)} className={styles.modalCloseBtn}>
+                Zavřít
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className={styles.formActions}>
           <button type="button" onClick={() => navigate(-1)} className={styles.cancelBtn}>

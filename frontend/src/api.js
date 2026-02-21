@@ -20,4 +20,9 @@ export const api = {
   createEvent: (data) => request("POST", "/api/v1/events", data),
   updateEvent: (id, data) => request("PUT", `/api/v1/events/${id}`, data),
   deleteEvent: (id) => request("DELETE", `/api/v1/events/${id}`),
+
+  listWishlist: () => request("GET", "/api/v1/wishlist"),
+  createWishlistItem: (data) => request("POST", "/api/v1/wishlist", data),
+  updateWishlistItem: (id, data) => request("PUT", `/api/v1/wishlist/${id}`, data),
+  deleteWishlistItem: (id) => request("DELETE", `/api/v1/wishlist/${id}`),
 };

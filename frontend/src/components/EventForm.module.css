@@ -124,6 +124,12 @@
   cursor: not-allowed;
 }
 
+.pubButtons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 .addPub {
   background: none;
   border: 1px dashed #ccc;
@@ -131,13 +137,123 @@
   padding: 0.5rem 1rem;
   color: #666;
   font-size: 0.9rem;
-  width: 100%;
-  margin-top: 0.5rem;
+  flex: 1;
 }
 
 .addPub:hover {
   border-color: #f5a623;
   color: #f5a623;
+}
+
+.fromWishlistBtn {
+  background: none;
+  border: 1px dashed #3498db;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  color: #3498db;
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.fromWishlistBtn:hover:not(:disabled) {
+  border-color: #2980b9;
+  color: #2980b9;
+}
+
+.fromWishlistBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.5rem;
+  width: min(480px, 90vw);
+  max-height: 70vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modal h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.wishlistPickList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.wishlistPickList li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+}
+
+.pickItemInfo {
+  flex: 1;
+}
+
+.pickItemName {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.pickItemAddr {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.pickBtn {
+  background: #f5a623;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pickBtn:hover {
+  background: #e09410;
+}
+
+.modalCloseBtn {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: #555;
+  align-self: flex-end;
+}
+
+.modalCloseBtn:hover {
+  background: #f5f5f5;
 }
 
 .formActions {

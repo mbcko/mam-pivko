@@ -25,6 +25,7 @@ async def test_db():
     yield db
 
     await db["events"].drop()
+    await db["wishlist"].drop()
     client.close()
     db_module.get_db = original_get_db  # type: ignore[assignment]
 

@@ -16,6 +16,25 @@
   font-size: 1.8rem;
 }
 
+.headerNav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.wishlistLink {
+  color: #3498db;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #3498db;
+  border-radius: 6px;
+}
+
+.wishlistLink:hover {
+  background: #ebf5fb;
+}
+
 .newBtn {
   background: #f5a623;
   color: #fff;

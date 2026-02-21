@@ -4,7 +4,7 @@ from collections.abc import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from mam_pivko.api import events, health
+from mam_pivko.api import events, health, wishlist
 from mam_pivko.config import settings
 from mam_pivko.db import close_client, get_client
 
@@ -28,5 +28,6 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router)
     app.include_router(events.router)
+    app.include_router(wishlist.router)
 
     return app

@@ -28,9 +28,10 @@ export default function EventList() {
     <div className={styles.page}>
       <header className={styles.header}>
         <h1>🍺 MAM Pivko</h1>
-        <Link to="/events/new" className={styles.newBtn}>
-          + Nová akce
-        </Link>
+        <nav className={styles.headerNav}>
+          <Link to="/wishlist" className={styles.wishlistLink}>Wishlist</Link>
+          <Link to="/events/new" className={styles.newBtn}>+ Nová akce</Link>
+        </nav>
       </header>
 
       {loading && <p>Načítám...</p>}
