@@ -34,10 +34,21 @@
 }
 
 .form input:focus,
-.form textarea:focus {
+.form textarea:focus,
+.select:focus {
   outline: none;
   border-color: #f5a623;
   box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.2);
+}
+
+.select {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  font-family: inherit;
+  background: #fff;
+  cursor: pointer;
 }
 
 .pubsField {

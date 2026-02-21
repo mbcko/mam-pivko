@@ -64,6 +64,11 @@ export default function EventDetail() {
             <div className={styles.pubName}>{pub.name}</div>
             {pub.address && <div className={styles.pubAddress}>{pub.address}</div>}
             {pub.notes && <div className={styles.pubNotes}>{pub.notes}</div>}
+            {pub.url && (
+              <a href={pub.url} target="_blank" rel="noopener noreferrer" className={styles.pubUrl}>
+                🔗 Otevřít odkaz
+              </a>
+            )}
           </li>
         ))}
       </ol>

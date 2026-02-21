@@ -3,10 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import styles from "./EventForm.module.css";
 
-const EMPTY_PUB = { name: "", address: "", notes: "" };
+const EMPTY_PUB = { name: "", address: "", notes: "", url: "" };
+const ORGANIZERS = ["MaSaK", "mbcko", "schunka"];
 
-const EMPTY_EVENT = {
-  name: "",
+const EMPTY_FORM = {
   date: "",
   organizer: "",
   pubs: [{ ...EMPTY_PUB }],
@@ -18,7 +18,8 @@ export default function EventForm() {
   const navigate = useNavigate();
   const isEdit = Boolean(id);
 
-  const [form, setForm] = useState(EMPTY_EVENT);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [organizerSelect, setOrganizerSelect] = useState("");
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -28,8 +29,9 @@ export default function EventForm() {
     api
       .getEvent(id)
       .then((event) => {
+        const knownOrganizer = ORGANIZERS.includes(event.organizer);
+        setOrganizerSelect(knownOrganizer ? event.organizer : "other");
         setForm({
-          name: event.name ?? "",
           date: event.date.slice(0, 10),
           organizer: event.organizer,
           pubs: event.pubs.length ? event.pubs : [{ ...EMPTY_PUB }],
@@ -42,6 +44,15 @@ export default function EventForm() {
 
   function setField(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  function handleOrganizerSelect(value) {
+    setOrganizerSelect(value);
+    if (value !== "other") {
+      setField("organizer", value);
+    } else {
+      setField("organizer", "");
+    }
   }
 
   function setPub(index, field, value) {
@@ -76,6 +87,7 @@ export default function EventForm() {
     try {
       const payload = {
         ...form,
+        name: "",
         date: new Date(form.date).toISOString(),
         pubs: form.pubs.filter((p) => p.name.trim()),
       };
@@ -103,16 +115,6 @@ export default function EventForm() {
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <label>
-          Název akce (volitelný)
-          <input
-            type="text"
-            placeholder="např. MAM Pivko #42"
-            value={form.name}
-            onChange={(e) => setField("name", e.target.value)}
-          />
-        </label>
-
-        <label>
           Datum *
           <input
             type="date"
@@ -124,14 +126,33 @@ export default function EventForm() {
 
         <label>
           Organizátor *
-          <input
-            type="text"
-            required
-            placeholder="Kdo plánuje večer"
-            value={form.organizer}
-            onChange={(e) => setField("organizer", e.target.value)}
-          />
+          <select
+            required={organizerSelect !== "other"}
+            value={organizerSelect}
+            onChange={(e) => handleOrganizerSelect(e.target.value)}
+            className={styles.select}
+          >
+            <option value="" disabled>Vyber organizátora...</option>
+            {ORGANIZERS.map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
+            <option value="other">Jiný...</option>
+          </select>
         </label>
+
+        {organizerSelect === "other" && (
+          <label>
+            Jméno organizátora *
+            <input
+              type="text"
+              required
+              autoFocus
+              placeholder="Zadej jméno"
+              value={form.organizer}
+              onChange={(e) => setField("organizer", e.target.value)}
+            />
+          </label>
+        )}
 
         <label>
           Poznámky k večeru
@@ -167,6 +188,12 @@ export default function EventForm() {
                   placeholder="Poznámka (volitelná, např. 'tady jíme')"
                   value={pub.notes}
                   onChange={(e) => setPub(i, "notes", e.target.value)}
+                />
+                <input
+                  type="url"
+                  placeholder="Odkaz (volitelný, např. na menu)"
+                  value={pub.url}
+                  onChange={(e) => setPub(i, "url", e.target.value)}
                 />
               </div>
               <div className={styles.pubControls}>

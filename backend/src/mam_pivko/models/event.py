@@ -20,6 +20,7 @@ class Pub(BaseModel):
     name: str
     address: str = ""
     notes: str = ""
+    url: str = ""
 
 
 class EventBase(BaseModel):

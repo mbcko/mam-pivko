@@ -6,8 +6,11 @@ class Settings(BaseSettings):
 
     mongodb_uri: str
     mongodb_db: str = "mam_pivko"
-    cors_origins: list[str] = ["http://localhost:5173"]
+    cors_origins: str = "http://localhost:5173"
     env: str = "development"
+
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_origins.split(",")]
 
 
 settings = Settings()  # type: ignore[call-arg]
