@@ -33,11 +33,15 @@ export default function EventPubMap({ pubs }) {
   useEffect(() => {
     if (!API_KEY || pubs.length === 0) return;
     Promise.all(
-      pubs.map((pub) =>
-        pub.address
-          ? geocodeAddress(`${pub.name}, ${pub.address}`)
-          : Promise.resolve(null)
-      )
+      pubs.map((pub) => {
+        if (pub.mapy_lon != null && pub.mapy_lat != null) {
+          return Promise.resolve({ lon: pub.mapy_lon, lat: pub.mapy_lat });
+        }
+        if (pub.address) {
+          return geocodeAddress(`${pub.name}, ${pub.address}`);
+        }
+        return Promise.resolve(null);
+      })
     ).then(setPositions);
   }, [pubs]);
 

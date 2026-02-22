@@ -72,7 +72,16 @@ export default function EventDetail() {
                   🔗 Otevřít odkaz
                 </a>
               )}
-              {(pub.name || pub.address) && (
+              {pub.mapy_lon != null ? (
+                <a
+                  href={`https://mapy.cz/zakladni?x=${pub.mapy_lon}&y=${pub.mapy_lat}&z=17`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.pubUrl}
+                >
+                  📍 Mapy.cz
+                </a>
+              ) : (pub.name || pub.address) ? (
                 <a
                   href={`https://mapy.cz/zakladni?q=${encodeURIComponent([pub.name, pub.address].filter(Boolean).join(", "))}`}
                   target="_blank"
@@ -81,7 +90,7 @@ export default function EventDetail() {
                 >
                   📍 Mapy.cz
                 </a>
-              )}
+              ) : null}
             </div>
           </li>
         ))}
