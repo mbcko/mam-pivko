@@ -1,16 +1,16 @@
 .PHONY: run test test-cov lint type-check
 
 run:
-	uvicorn mam_pivko.main:app --reload --host 0.0.0.0 --port 8000
+	uv run uvicorn mam_pivko.main:app --reload --host 0.0.0.0 --port 8000
 
 test:
-	pytest
+	uv run pytest
 
 test-cov:
-	pytest --cov=mam_pivko --cov-report=term-missing
+	uv run pytest --cov=mam_pivko --cov-report=term-missing
 
 lint:
-	ruff check src/ tests/
+	uv run ruff check src/ tests/
 
 type-check:
-	mypy src/
+	uv run mypy src/
