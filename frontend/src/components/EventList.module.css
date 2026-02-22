@@ -66,6 +66,16 @@
   transition: box-shadow 0.15s;
 }
 
+.future a {
+  border-color: #f5a623;
+  background: #fffbf5;
+}
+
+.future .date {
+  color: #e09410;
+  font-weight: 600;
+}
+
 .item a:hover {
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }

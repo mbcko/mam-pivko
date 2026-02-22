@@ -111,11 +111,15 @@
   font-style: italic;
 }
 
+.pubLinks {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.4rem;
+}
+
 .pubUrl {
-  display: inline-block;
   font-size: 0.85rem;
   color: #3498db;
-  margin-top: 0.4rem;
   text-decoration: underline;
 }
 

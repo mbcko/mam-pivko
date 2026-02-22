@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import styles from "./EventDetail.module.css";
+import EventPubMap from "./EventPubMap.jsx";
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString("cs-CZ", {
@@ -58,17 +59,30 @@ export default function EventDetail() {
       {event.notes && <p className={styles.notes}>{event.notes}</p>}
 
       <h2>Hospody</h2>
+      <EventPubMap pubs={event.pubs} />
       <ol className={styles.pubs}>
         {event.pubs.map((pub, i) => (
           <li key={i} className={styles.pub}>
             <div className={styles.pubName}>{pub.name}</div>
             {pub.address && <div className={styles.pubAddress}>{pub.address}</div>}
             {pub.notes && <div className={styles.pubNotes}>{pub.notes}</div>}
-            {pub.url && (
-              <a href={pub.url} target="_blank" rel="noopener noreferrer" className={styles.pubUrl}>
-                🔗 Otevřít odkaz
-              </a>
-            )}
+            <div className={styles.pubLinks}>
+              {pub.url && (
+                <a href={pub.url} target="_blank" rel="noopener noreferrer" className={styles.pubUrl}>
+                  🔗 Otevřít odkaz
+                </a>
+              )}
+              {(pub.name || pub.address) && (
+                <a
+                  href={`https://mapy.cz/zakladni?q=${encodeURIComponent([pub.name, pub.address].filter(Boolean).join(", "))}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.pubUrl}
+                >
+                  📍 Mapy.cz
+                </a>
+              )}
+            </div>
           </li>
         ))}
       </ol>
