@@ -6,12 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from mam_pivko.api import events, health, wishlist
 from mam_pivko.config import settings
-from mam_pivko.db import close_client, get_client
+from mam_pivko.db import close_client
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    get_client()
     yield
     close_client()
 

@@ -1,4 +1,3 @@
-import pytest
 from httpx import AsyncClient
 
 EVENT_PAYLOAD = {
@@ -13,14 +12,12 @@ EVENT_PAYLOAD = {
 }
 
 
-@pytest.mark.asyncio
 async def test_health(client: AsyncClient):
     r = await client.get("/health")
     assert r.status_code == 200
     assert r.json() == {"status": "ok"}
 
 
-@pytest.mark.asyncio
 async def test_create_event(client: AsyncClient):
     r = await client.post("/api/v1/events", json=EVENT_PAYLOAD)
     assert r.status_code == 201
@@ -31,7 +28,6 @@ async def test_create_event(client: AsyncClient):
     assert "_id" in data or "id" in data
 
 
-@pytest.mark.asyncio
 async def test_list_events(client: AsyncClient):
     await client.post("/api/v1/events", json=EVENT_PAYLOAD)
     r = await client.get("/api/v1/events")
@@ -39,7 +35,6 @@ async def test_list_events(client: AsyncClient):
     assert len(r.json()) == 1
 
 
-@pytest.mark.asyncio
 async def test_get_event(client: AsyncClient):
     create_r = await client.post("/api/v1/events", json=EVENT_PAYLOAD)
     event_id = create_r.json()["_id"]
@@ -49,13 +44,11 @@ async def test_get_event(client: AsyncClient):
     assert r.json()["_id"] == event_id
 
 
-@pytest.mark.asyncio
 async def test_get_event_not_found(client: AsyncClient):
     r = await client.get("/api/v1/events/000000000000000000000000")
     assert r.status_code == 404
 
 
-@pytest.mark.asyncio
 async def test_update_event(client: AsyncClient):
     create_r = await client.post("/api/v1/events", json=EVENT_PAYLOAD)
     event_id = create_r.json()["_id"]
@@ -66,7 +59,6 @@ async def test_update_event(client: AsyncClient):
     assert r.json()["name"] == "MAM Pivko #1 (updated)"
 
 
-@pytest.mark.asyncio
 async def test_delete_event(client: AsyncClient):
     create_r = await client.post("/api/v1/events", json=EVENT_PAYLOAD)
     event_id = create_r.json()["_id"]
