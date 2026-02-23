@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import styles from "./EventForm.module.css";
-
-const MAPY_API_KEY = import.meta.env.VITE_MAPY_API_KEY;
+import MapySearchField from "./MapySearchField.jsx";
 const EMPTY_PUB = { name: "", address: "", notes: "", url: "", mapy_lon: null, mapy_lat: null, mapy_label: "" };
 const ORGANIZERS = ["MaSaK", "mbcko", "schunka"];
 
@@ -26,9 +25,6 @@ export default function EventForm() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [pubSearch, setPubSearchState] = useState({});
-  const searchTimerRef = useRef({});
-
   useEffect(() => {
     api.listWishlist().then(setWishlist).catch(() => {});
   }, []);
@@ -99,54 +95,24 @@ export default function EventForm() {
     });
   }
 
-  function setPubSearch(index, updates) {
-    setPubSearchState((s) => ({
-      ...s,
-      [index]: { query: "", results: [], open: false, ...(s[index] || {}), ...updates },
-    }));
-  }
-
-  async function doMapySearch(index, query) {
-    try {
-      const res = await fetch(
-        `https://api.mapy.com/v1/suggest?query=${encodeURIComponent(query)}&limit=5&lang=cs&apikey=${MAPY_API_KEY}`
-      );
-      const data = await res.json();
-      setPubSearch(index, { results: data.items || [], open: true });
-    } catch {
-      setPubSearch(index, { results: [], open: false });
-    }
-  }
-
-  function handleMapySearch(index, query) {
-    setPubSearch(index, { query });
-    clearTimeout(searchTimerRef.current[index]);
-    if (query.length < 2) {
-      setPubSearch(index, { results: [], open: false });
-      return;
-    }
-    searchTimerRef.current[index] = setTimeout(() => doMapySearch(index, query), 350);
-  }
-
-  function selectMapyResult(index, item) {
+  function setMapyPub(index, { lon, lat, label }) {
     setForm((f) => {
       const pubs = f.pubs.map((p, i) => {
         if (i !== index) return p;
         return {
           ...p,
-          mapy_lon: item.position.lon,
-          mapy_lat: item.position.lat,
-          mapy_label: `${item.name} – ${item.location}`,
-          name: p.name || item.name,
-          address: p.address || item.location,
+          mapy_lon: lon,
+          mapy_lat: lat,
+          mapy_label: label,
+          name: p.name || label.split(" –")[0],
+          address: p.address || label.split("– ")[1] || "",
         };
       });
       return { ...f, pubs };
     });
-    setPubSearch(index, { query: "", results: [], open: false });
   }
 
-  function clearMapyLink(index) {
+  function clearMapyPub(index) {
     setForm((f) => {
       const pubs = f.pubs.map((p, i) =>
         i === index ? { ...p, mapy_lon: null, mapy_lat: null, mapy_label: "" } : p
@@ -270,35 +236,13 @@ export default function EventForm() {
                   value={pub.url}
                   onChange={(e) => setPub(i, "url", e.target.value)}
                 />
-                {MAPY_API_KEY && (
-                  pub.mapy_lon != null ? (
-                    <div className={styles.mapyLinked}>
-                      <span>📍 {pub.mapy_label || "Propojeno s Mapy.cz"}</span>
-                      <button type="button" onClick={() => clearMapyLink(i)} className={styles.mapyUnlink} title="Zrušit propojení">✕</button>
-                    </div>
-                  ) : (
-                    <div className={styles.mapySearch}>
-                      <input
-                        type="text"
-                        placeholder="🔍 Vyhledat na Mapy.cz..."
-                        value={pubSearch[i]?.query ?? ""}
-                        onChange={(e) => handleMapySearch(i, e.target.value)}
-                        onBlur={() => setTimeout(() => setPubSearch(i, { open: false }), 150)}
-                        className={styles.mapySearchInput}
-                      />
-                      {pubSearch[i]?.open && pubSearch[i].results.length > 0 && (
-                        <ul className={styles.mapySuggest}>
-                          {pubSearch[i].results.map((item, j) => (
-                            <li key={j} onMouseDown={() => selectMapyResult(i, item)}>
-                              <div className={styles.mapySuggestName}>{item.name}</div>
-                              <div className={styles.mapySuggestLoc}>{item.location}</div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )
-                )}
+                <MapySearchField
+                  lon={pub.mapy_lon}
+                  lat={pub.mapy_lat}
+                  label={pub.mapy_label}
+                  onLink={(pos) => setMapyPub(i, pos)}
+                  onClear={() => clearMapyPub(i)}
+                />
               </div>
               <div className={styles.pubControls}>
                 <button type="button" onClick={() => movePub(i, -1)} disabled={i === 0} title="Nahoru">↑</button>

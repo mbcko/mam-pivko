@@ -21,6 +21,9 @@ class WishlistItemBase(BaseModel):
     address: str = ""
     notes: str = ""
     url: str = ""
+    mapy_lon: float | None = None
+    mapy_lat: float | None = None
+    mapy_label: str = ""
 
 
 class WishlistItemCreate(WishlistItemBase):

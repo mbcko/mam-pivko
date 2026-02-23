@@ -86,11 +86,15 @@
   margin-top: 0.2rem;
 }
 
+.itemLinks {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.3rem;
+}
+
 .itemUrl {
-  display: inline-block;
   font-size: 0.85rem;
   color: #3498db;
-  margin-top: 0.3rem;
   text-decoration: underline;
 }
 

@@ -19,13 +19,16 @@ function pubLabel(n) {
 
 export default function EventList() {
   const [events, setEvents] = useState([]);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    api
-      .listEvents()
-      .then(setEvents)
+    Promise.all([api.listEvents(), api.listWishlist()])
+      .then(([evts, wish]) => {
+        setEvents(evts);
+        setWishlistCount(wish.length);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -35,7 +38,9 @@ export default function EventList() {
       <header className={styles.header}>
         <h1>🍺 MAM Pivko</h1>
         <nav className={styles.headerNav}>
-          <Link to="/wishlist" className={styles.wishlistLink}>Wishlist</Link>
+          <Link to="/wishlist" className={styles.wishlistLink}>
+            Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ""}
+          </Link>
           <Link to="/events/new" className={styles.newBtn}>+ Nová akce</Link>
         </nav>
       </header>

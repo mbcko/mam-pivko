@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
+import EventPubMap from "./EventPubMap.jsx";
+import MapySearchField from "./MapySearchField.jsx";
 import styles from "./WishlistPage.module.css";
 
-const EMPTY_FORM = { name: "", address: "", notes: "", url: "" };
+const EMPTY_FORM = { name: "", address: "", notes: "", url: "", mapy_lon: null, mapy_lat: null, mapy_label: "" };
 
 function ItemForm({ initial = EMPTY_FORM, onSave, onCancel }) {
   const [form, setForm] = useState(initial);
@@ -47,6 +49,22 @@ function ItemForm({ initial = EMPTY_FORM, onSave, onCancel }) {
         placeholder="Odkaz (volitelný)"
         value={form.url}
         onChange={(e) => setField("url", e.target.value)}
+      />
+      <MapySearchField
+        lon={form.mapy_lon}
+        lat={form.mapy_lat}
+        label={form.mapy_label}
+        onLink={({ lon, lat, label }) =>
+          setForm((f) => ({
+            ...f,
+            mapy_lon: lon,
+            mapy_lat: lat,
+            mapy_label: label,
+            name: f.name || label.split(" –")[0],
+            address: f.address || label.split("– ")[1] || "",
+          }))
+        }
+        onClear={() => setForm((f) => ({ ...f, mapy_lon: null, mapy_lat: null, mapy_label: "" }))}
       />
       <div className={styles.inlineActions}>
         <button type="submit" disabled={saving} className={styles.saveBtn}>
@@ -112,10 +130,7 @@ export default function WishlistPage() {
 
       {showAddForm && (
         <div className={styles.card}>
-          <ItemForm
-            onSave={handleAdd}
-            onCancel={() => setShowAddForm(false)}
-          />
+          <ItemForm onSave={handleAdd} onCancel={() => setShowAddForm(false)} />
         </div>
       )}
 
@@ -125,12 +140,22 @@ export default function WishlistPage() {
         <p className={styles.empty}>Wishlist je prázdný. Přidej hospody, které chcete navštívit!</p>
       )}
 
+      {items.length > 0 && <EventPubMap pubs={items} />}
+
       <ul className={styles.list}>
         {items.map((item) => (
           <li key={item._id} className={styles.card}>
             {editingId === item._id ? (
               <ItemForm
-                initial={{ name: item.name, address: item.address, notes: item.notes, url: item.url }}
+                initial={{
+                  name: item.name,
+                  address: item.address,
+                  notes: item.notes,
+                  url: item.url,
+                  mapy_lon: item.mapy_lon ?? null,
+                  mapy_lat: item.mapy_lat ?? null,
+                  mapy_label: item.mapy_label ?? "",
+                }}
                 onSave={(form) => handleUpdate(item._id, form)}
                 onCancel={() => setEditingId(null)}
               />
@@ -140,11 +165,32 @@ export default function WishlistPage() {
                   <div className={styles.itemName}>{item.name}</div>
                   {item.address && <div className={styles.itemMeta}>{item.address}</div>}
                   {item.notes && <div className={styles.itemNotes}>{item.notes}</div>}
-                  {item.url && (
-                    <a href={item.url} target="_blank" rel="noopener noreferrer" className={styles.itemUrl}>
-                      🔗 Odkaz
-                    </a>
-                  )}
+                  <div className={styles.itemLinks}>
+                    {item.url && (
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" className={styles.itemUrl}>
+                        🔗 Odkaz
+                      </a>
+                    )}
+                    {item.mapy_lon != null ? (
+                      <a
+                        href={`https://mapy.cz/zakladni?x=${item.mapy_lon}&y=${item.mapy_lat}&z=17`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.itemUrl}
+                      >
+                        📍 Mapy.cz
+                      </a>
+                    ) : (item.name || item.address) ? (
+                      <a
+                        href={`https://mapy.cz/zakladni?q=${encodeURIComponent([item.name, item.address].filter(Boolean).join(", "))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.itemUrl}
+                      >
+                        📍 Mapy.cz
+                      </a>
+                    ) : null}
+                  </div>
                 </div>
                 <div className={styles.itemActions}>
                   <button onClick={() => setEditingId(item._id)} className={styles.editBtn}>Upravit</button>

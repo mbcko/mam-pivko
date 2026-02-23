@@ -1,0 +1,84 @@
+.linked {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fffbf5;
+  border: 1px solid #f5a623;
+  border-radius: 6px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+  color: #7a5000;
+}
+
+.linked span {
+  flex: 1;
+}
+
+.unlink {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 0.8rem;
+  padding: 0;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.unlink:hover {
+  color: #c0392b;
+}
+
+.search {
+  position: relative;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #f5a623;
+}
+
+.suggest {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  list-style: none;
+  padding: 0.25rem 0;
+  margin: 0;
+  z-index: 50;
+}
+
+.suggest li {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.suggest li:hover {
+  background: #fef9f0;
+}
+
+.suggestName {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.suggestLoc {
+  font-size: 0.78rem;
+  color: #888;
+  margin-top: 0.1rem;
+}
