@@ -1,3 +1,14 @@
+:root {
+  --color-primary: #f5a623;
+  --color-primary-dark: #e09410;
+  --color-primary-alpha: rgba(245, 166, 35, 0.2);
+  --color-blue: #3498db;
+  --color-blue-dark: #2980b9;
+  --color-error: #c0392b;
+  --color-border: #ddd;
+  --color-text-muted: #888;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -16,4 +27,14 @@ a {
 
 button {
   cursor: pointer;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.page h1 {
+  margin-bottom: 1.5rem;
 }

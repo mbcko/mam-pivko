@@ -1,17 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api.js";
+import { formatDateLong } from "../utils/format.js";
 import styles from "./EventDetail.module.css";
 import EventPubMap from "./EventPubMap.jsx";
-
-function formatDate(iso) {
-  return new Date(iso).toLocaleDateString("cs-CZ", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
+import MapyLink from "./MapyLink.jsx";
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -34,19 +27,19 @@ export default function EventDetail() {
     navigate("/");
   }
 
-  if (loading) return <div className={styles.page}><p>Načítám...</p></div>;
-  if (error) return <div className={styles.page}><p className={styles.error}>Chyba: {error}</p></div>;
+  if (loading) return <div className="page"><p>Načítám...</p></div>;
+  if (error) return <div className="page"><p className={styles.error}>Chyba: {error}</p></div>;
   if (!event) return null;
 
   return (
-    <div className={styles.page}>
+    <div className="page">
       <nav className={styles.nav}>
         <Link to="/">← Zpět</Link>
       </nav>
 
       <header className={styles.header}>
         <div>
-          <div className={styles.date}>{formatDate(event.date)}</div>
+          <div className={styles.date}>{formatDateLong(event.date)}</div>
           <h1>{event.name || `MAM Pivko — ${event.organizer}`}</h1>
           <div className={styles.meta}>Organizátor: <strong>{event.organizer}</strong></div>
         </div>
@@ -72,25 +65,13 @@ export default function EventDetail() {
                   🔗 Otevřít odkaz
                 </a>
               )}
-              {pub.mapy_lon != null ? (
-                <a
-                  href={`https://mapy.cz/zakladni?x=${pub.mapy_lon}&y=${pub.mapy_lat}&z=17`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.pubUrl}
-                >
-                  📍 Mapy.cz
-                </a>
-              ) : (pub.name || pub.address) ? (
-                <a
-                  href={`https://mapy.cz/zakladni?q=${encodeURIComponent([pub.name, pub.address].filter(Boolean).join(", "))}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.pubUrl}
-                >
-                  📍 Mapy.cz
-                </a>
-              ) : null}
+              <MapyLink
+                lon={pub.mapy_lon}
+                lat={pub.mapy_lat}
+                name={pub.name}
+                address={pub.address}
+                className={styles.pubUrl}
+              />
             </div>
           </li>
         ))}

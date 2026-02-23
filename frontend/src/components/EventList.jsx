@@ -1,15 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
+import { formatDate } from "../utils/format.js";
 import styles from "./EventList.module.css";
-
-function formatDate(iso) {
-  return new Date(iso).toLocaleDateString("cs-CZ", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
 
 function pubLabel(n) {
   if (n === 1) return "1 hospoda";
@@ -34,7 +27,7 @@ export default function EventList() {
   }, []);
 
   return (
-    <div className={styles.page}>
+    <div className="page">
       <header className={styles.header}>
         <h1>🍺 MAM Pivko</h1>
         <nav className={styles.headerNav}>

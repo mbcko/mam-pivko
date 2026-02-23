@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import EventPubMap from "./EventPubMap.jsx";
+import MapyLink from "./MapyLink.jsx";
 import MapySearchField from "./MapySearchField.jsx";
 import styles from "./WishlistPage.module.css";
 
@@ -112,7 +113,7 @@ export default function WishlistPage() {
   }
 
   return (
-    <div className={styles.page}>
+    <div className="page">
       <nav className={styles.nav}>
         <Link to="/">← Zpět</Link>
       </nav>
@@ -171,25 +172,13 @@ export default function WishlistPage() {
                         🔗 Odkaz
                       </a>
                     )}
-                    {item.mapy_lon != null ? (
-                      <a
-                        href={`https://mapy.cz/zakladni?x=${item.mapy_lon}&y=${item.mapy_lat}&z=17`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.itemUrl}
-                      >
-                        📍 Mapy.cz
-                      </a>
-                    ) : (item.name || item.address) ? (
-                      <a
-                        href={`https://mapy.cz/zakladni?q=${encodeURIComponent([item.name, item.address].filter(Boolean).join(", "))}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.itemUrl}
-                      >
-                        📍 Mapy.cz
-                      </a>
-                    ) : null}
+                    <MapyLink
+                      lon={item.mapy_lon}
+                      lat={item.mapy_lat}
+                      name={item.name}
+                      address={item.address}
+                      className={styles.itemUrl}
+                    />
                   </div>
                 </div>
                 <div className={styles.itemActions}>

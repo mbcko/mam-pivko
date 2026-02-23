@@ -146,10 +146,10 @@ export default function EventForm() {
     }
   }
 
-  if (loading) return <div className={styles.page}><p>Načítám...</p></div>;
+  if (loading) return <div className="page"><p>Načítám...</p></div>;
 
   return (
-    <div className={styles.page}>
+    <div className="page">
       <h1>{isEdit ? "Upravit akci" : "Nová akce"}</h1>
 
       {error && <p className={styles.error}>Chyba: {error}</p>}
