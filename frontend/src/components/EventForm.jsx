@@ -1,17 +1,98 @@
+import {
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import styles from "./EventForm.module.css";
 import MapySearchField from "./MapySearchField.jsx";
+
 const EMPTY_PUB = { name: "", address: "", notes: "", url: "", mapy_lon: null, mapy_lat: null, mapy_label: "" };
 const ORGANIZERS = ["MaSaK", "mbcko", "schunka"];
+
+function newPub(overrides = {}) {
+  return { ...EMPTY_PUB, _id: crypto.randomUUID(), ...overrides };
+}
 
 const EMPTY_FORM = {
   date: "",
   organizer: "",
-  pubs: [{ ...EMPTY_PUB }],
+  pubs: [newPub()],
   notes: "",
 };
+
+function SortablePubRow({ id, index, pub, totalPubs, onSetField, onRemove, onSetMapy, onClearMapy }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
+      className={styles.pubRow}
+    >
+      <button type="button" className={styles.dragHandle} title="Přetáhnout" {...attributes} {...listeners}>
+        ⠿
+      </button>
+      <div className={styles.pubIndex}>{index + 1}.</div>
+      <div className={styles.pubFields}>
+        <input
+          type="text"
+          placeholder="Název hospody *"
+          value={pub.name}
+          onChange={(e) => onSetField("name", e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Adresa (volitelná)"
+          value={pub.address}
+          onChange={(e) => onSetField("address", e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Poznámka (volitelná, např. 'tady jíme')"
+          value={pub.notes}
+          onChange={(e) => onSetField("notes", e.target.value)}
+        />
+        <input
+          type="url"
+          placeholder="Odkaz (volitelný, např. na menu)"
+          value={pub.url}
+          onChange={(e) => onSetField("url", e.target.value)}
+        />
+        <MapySearchField
+          lon={pub.mapy_lon}
+          lat={pub.mapy_lat}
+          label={pub.mapy_label}
+          onLink={onSetMapy}
+          onClear={onClearMapy}
+        />
+      </div>
+      <button
+        type="button"
+        className={styles.removeBtn}
+        onClick={onRemove}
+        disabled={totalPubs === 1}
+        title="Odebrat"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
 
 export default function EventForm() {
   const { id } = useParams();
@@ -25,6 +106,13 @@ export default function EventForm() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+
+  const sensors = useSensors(
+    useSensor(MouseSensor),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
   useEffect(() => {
     api.listWishlist().then(setWishlist).catch(() => {});
   }, []);
@@ -39,7 +127,7 @@ export default function EventForm() {
         setForm({
           date: event.date.slice(0, 10),
           organizer: event.organizer,
-          pubs: event.pubs.length ? event.pubs : [{ ...EMPTY_PUB }],
+          pubs: event.pubs.length ? event.pubs.map((p) => newPub(p)) : [newPub()],
           notes: event.notes ?? "",
         });
       })
@@ -68,13 +156,13 @@ export default function EventForm() {
   }
 
   function addPub() {
-    setForm((f) => ({ ...f, pubs: [...f.pubs, { ...EMPTY_PUB }] }));
+    setForm((f) => ({ ...f, pubs: [...f.pubs, newPub()] }));
   }
 
   function pickFromWishlist(item) {
     setForm((f) => ({
       ...f,
-      pubs: [...f.pubs, { name: item.name, address: item.address, notes: item.notes, url: item.url }],
+      pubs: [...f.pubs, newPub({ name: item.name, address: item.address, notes: item.notes, url: item.url })],
     }));
     setWishlist((w) => w.filter((i) => i._id !== item._id));
     api.deleteWishlistItem(item._id).catch(() => {});
@@ -85,13 +173,12 @@ export default function EventForm() {
     setForm((f) => ({ ...f, pubs: f.pubs.filter((_, i) => i !== index) }));
   }
 
-  function movePub(index, direction) {
+  function handleDragEnd({ active, over }) {
+    if (!over || active.id === over.id) return;
     setForm((f) => {
-      const pubs = [...f.pubs];
-      const target = index + direction;
-      if (target < 0 || target >= pubs.length) return f;
-      [pubs[index], pubs[target]] = [pubs[target], pubs[index]];
-      return { ...f, pubs };
+      const oldIndex = f.pubs.findIndex((p) => p._id === active.id);
+      const newIndex = f.pubs.findIndex((p) => p._id === over.id);
+      return { ...f, pubs: arrayMove(f.pubs, oldIndex, newIndex) };
     });
   }
 
@@ -208,49 +295,23 @@ export default function EventForm() {
         <fieldset className={styles.pubsField}>
           <legend>Hospody</legend>
 
-          {form.pubs.map((pub, i) => (
-            <div key={i} className={styles.pubRow}>
-              <div className={styles.pubIndex}>{i + 1}.</div>
-              <div className={styles.pubFields}>
-                <input
-                  type="text"
-                  placeholder="Název hospody *"
-                  value={pub.name}
-                  onChange={(e) => setPub(i, "name", e.target.value)}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={form.pubs.map((p) => p._id)} strategy={verticalListSortingStrategy}>
+              {form.pubs.map((pub, i) => (
+                <SortablePubRow
+                  key={pub._id}
+                  id={pub._id}
+                  index={i}
+                  pub={pub}
+                  totalPubs={form.pubs.length}
+                  onSetField={(field, value) => setPub(i, field, value)}
+                  onRemove={() => removePub(i)}
+                  onSetMapy={(pos) => setMapyPub(i, pos)}
+                  onClearMapy={() => clearMapyPub(i)}
                 />
-                <input
-                  type="text"
-                  placeholder="Adresa (volitelná)"
-                  value={pub.address}
-                  onChange={(e) => setPub(i, "address", e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="Poznámka (volitelná, např. 'tady jíme')"
-                  value={pub.notes}
-                  onChange={(e) => setPub(i, "notes", e.target.value)}
-                />
-                <input
-                  type="url"
-                  placeholder="Odkaz (volitelný, např. na menu)"
-                  value={pub.url}
-                  onChange={(e) => setPub(i, "url", e.target.value)}
-                />
-                <MapySearchField
-                  lon={pub.mapy_lon}
-                  lat={pub.mapy_lat}
-                  label={pub.mapy_label}
-                  onLink={(pos) => setMapyPub(i, pos)}
-                  onClear={() => clearMapyPub(i)}
-                />
-              </div>
-              <div className={styles.pubControls}>
-                <button type="button" onClick={() => movePub(i, -1)} disabled={i === 0} title="Nahoru">↑</button>
-                <button type="button" onClick={() => movePub(i, 1)} disabled={i === form.pubs.length - 1} title="Dolů">↓</button>
-                <button type="button" onClick={() => removePub(i)} disabled={form.pubs.length === 1} title="Odebrat">✕</button>
-              </div>
-            </div>
-          ))}
+              ))}
+            </SortableContext>
+          </DndContext>
 
           <div className={styles.pubButtons}>
             <button type="button" onClick={addPub} className={styles.addPub}>

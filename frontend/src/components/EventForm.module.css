@@ -87,13 +87,26 @@
   border-color: #f5a623;
 }
 
-.pubControls {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+.dragHandle {
+  background: none;
+  border: none;
+  padding: 0.4rem 0.15rem;
+  color: #bbb;
+  cursor: grab;
+  font-size: 1.2rem;
+  line-height: 1;
+  touch-action: none;
+  align-self: flex-start;
+  margin-top: 0.35rem;
+  flex-shrink: 0;
 }
 
-.pubControls button {
+.dragHandle:active {
+  cursor: grabbing;
+  color: #888;
+}
+
+.removeBtn {
   background: #f0f0f0;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -103,13 +116,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: flex-start;
+  margin-top: 0.35rem;
+  flex-shrink: 0;
 }
 
-.pubControls button:hover:not(:disabled) {
+.removeBtn:hover:not(:disabled) {
   background: #e0e0e0;
 }
 
-.pubControls button:disabled {
+.removeBtn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
