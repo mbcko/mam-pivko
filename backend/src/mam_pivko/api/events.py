@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pymongo.database import Database
 
+from mam_pivko.api.auth import require_auth
 from mam_pivko.db import get_db
 from mam_pivko.models.event import Event, EventCreate, EventUpdate
 from mam_pivko.services import event_service
@@ -14,7 +15,7 @@ def list_events(db: Database = Depends(get_db)) -> list[Event]:  # type: ignore[
 
 
 @router.post("", response_model=Event, status_code=201)
-def create_event(data: EventCreate, db: Database = Depends(get_db)) -> Event:  # type: ignore[type-arg]
+def create_event(data: EventCreate, db: Database = Depends(get_db), _: str = Depends(require_auth)) -> Event:  # type: ignore[type-arg]
     return event_service.create_event(db, data)
 
 
@@ -27,7 +28,7 @@ def get_event(event_id: str, db: Database = Depends(get_db)) -> Event:  # type: 
 
 
 @router.put("/{event_id}", response_model=Event)
-def update_event(event_id: str, data: EventUpdate, db: Database = Depends(get_db)) -> Event:  # type: ignore[type-arg]
+def update_event(event_id: str, data: EventUpdate, db: Database = Depends(get_db), _: str = Depends(require_auth)) -> Event:  # type: ignore[type-arg]
     event = event_service.update_event(db, event_id, data)
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
@@ -35,7 +36,7 @@ def update_event(event_id: str, data: EventUpdate, db: Database = Depends(get_db
 
 
 @router.delete("/{event_id}", status_code=204)
-def delete_event(event_id: str, db: Database = Depends(get_db)) -> None:  # type: ignore[type-arg]
+def delete_event(event_id: str, db: Database = Depends(get_db), _: str = Depends(require_auth)) -> None:  # type: ignore[type-arg]
     deleted = event_service.delete_event(db, event_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Event not found")

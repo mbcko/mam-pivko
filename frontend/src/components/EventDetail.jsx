@@ -1,15 +1,40 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api.js";
+import { useAuth } from "../AuthContext.jsx";
 import { formatDateLong } from "../utils/format.js";
 import styles from "./EventDetail.module.css";
 import EventPubMap from "./EventPubMap.jsx";
 import MapyLink from "./MapyLink.jsx";
 import LoadingMessage from "./LoadingMessage.jsx";
 
+function buildCalendarUrl(event, members) {
+  const title = event.name || `MAM Pivko — ${event.organizer}`;
+  const dateStr = event.date.replace(/-/g, "");
+  const nextDay = new Date(event.date);
+  nextDay.setDate(nextDay.getDate() + 1);
+  const nextDateStr = nextDay.toISOString().slice(0, 10).replace(/-/g, "");
+  const details = event.pubs
+    .map((p, i) => `${i + 1}. ${p.name}${p.address ? ` — ${p.address}` : ""}`)
+    .join("\n");
+  const location = event.pubs[0]?.address || event.pubs[0]?.name || "";
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: title,
+    dates: `${dateStr}/${nextDateStr}`,
+    details,
+    location,
+  });
+  if (members.length) params.set("add", members.join(","));
+
+  return `https://calendar.google.com/calendar/render?${params}`;
+}
+
 export default function EventDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, members } = useAuth();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -45,12 +70,31 @@ export default function EventDetail() {
           <div className={styles.meta}>Organizátor: <strong>{event.organizer}</strong></div>
         </div>
         <div className={styles.actions}>
-          <Link to={`/events/${id}/edit`} className={styles.editBtn}>Upravit</Link>
-          <button onClick={handleDelete} className={styles.deleteBtn}>Smazat</button>
+          {user ? (
+            <Link to={`/events/${id}/edit`} className={styles.editBtn}>Upravit</Link>
+          ) : (
+            <span className={`${styles.editBtn} ${styles.btnDisabled}`} title="Přihlaš se pro úpravy">Upravit</span>
+          )}
+          {user ? (
+            <button onClick={handleDelete} className={styles.deleteBtn}>Smazat</button>
+          ) : (
+            <button disabled className={`${styles.deleteBtn} ${styles.btnDisabled}`}>Smazat</button>
+          )}
         </div>
       </header>
 
       {event.notes && <p className={styles.notes}>{event.notes}</p>}
+
+      {user && (
+        <a
+          href={buildCalendarUrl(event, members)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.calendarBtn}
+        >
+          📅 Pozvat do kalendáře
+        </a>
+      )}
 
       <h2>Hospody</h2>
       <EventPubMap pubs={event.pubs} />

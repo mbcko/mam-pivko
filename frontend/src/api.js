@@ -1,9 +1,18 @@
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
+let _token = null;
+
+export function setToken(token) {
+  _token = token;
+}
+
 async function request(method, path, body) {
+  const headers = {};
+  if (body) headers["Content-Type"] = "application/json";
+  if (_token) headers["Authorization"] = `Bearer ${_token}`;
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: body ? { "Content-Type": "application/json" } : {},
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) {
@@ -15,6 +24,8 @@ async function request(method, path, body) {
 }
 
 export const api = {
+  setToken,
+
   listEvents: () => request("GET", "/api/v1/events"),
   getEvent: (id) => request("GET", `/api/v1/events/${id}`),
   createEvent: (data) => request("POST", "/api/v1/events", data),
@@ -25,4 +36,6 @@ export const api = {
   createWishlistItem: (data) => request("POST", "/api/v1/wishlist", data),
   updateWishlistItem: (id, data) => request("PUT", `/api/v1/wishlist/${id}`, data),
   deleteWishlistItem: (id) => request("DELETE", `/api/v1/wishlist/${id}`),
+
+  listMembers: () => request("GET", "/api/v1/members"),
 };

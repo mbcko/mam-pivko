@@ -64,6 +64,27 @@
   background: #c0392b;
 }
 
+.btnDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.calendarBtn {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  background: #27ae60;
+  color: #fff;
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.calendarBtn:hover {
+  background: #219a52;
+}
+
 .notes {
   background: #fff8e1;
   border-left: 3px solid #f5a623;

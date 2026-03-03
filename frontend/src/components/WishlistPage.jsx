@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
+import { useAuth } from "../AuthContext.jsx";
 import EventPubMap from "./EventPubMap.jsx";
 import MapyLink from "./MapyLink.jsx";
 import MapySearchField from "./MapySearchField.jsx";
@@ -81,6 +82,7 @@ function ItemForm({ initial = EMPTY_FORM, onSave, onCancel }) {
 }
 
 export default function WishlistPage() {
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -121,7 +123,7 @@ export default function WishlistPage() {
 
       <header className={styles.header}>
         <h1>⭐ Wishlist hospod</h1>
-        {!showAddForm && (
+        {user && !showAddForm && (
           <button onClick={() => setShowAddForm(true)} className={styles.addBtn}>
             + Přidat hospodu
           </button>
@@ -182,10 +184,12 @@ export default function WishlistPage() {
                     />
                   </div>
                 </div>
-                <div className={styles.itemActions}>
-                  <button onClick={() => setEditingId(item._id)} className={styles.editBtn}>Upravit</button>
-                  <button onClick={() => handleDelete(item._id)} className={styles.deleteBtn}>Odebrat</button>
-                </div>
+                {user && (
+                  <div className={styles.itemActions}>
+                    <button onClick={() => setEditingId(item._id)} className={styles.editBtn}>Upravit</button>
+                    <button onClick={() => handleDelete(item._id)} className={styles.deleteBtn}>Odebrat</button>
+                  </div>
+                )}
               </div>
             )}
           </li>
