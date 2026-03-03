@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import { formatDate } from "../utils/format.js";
 import styles from "./EventList.module.css";
+import LoadingMessage from "./LoadingMessage.jsx";
 
 function pubLabel(n) {
   if (n === 1) return "1 hospoda";
@@ -38,7 +39,7 @@ export default function EventList() {
         </nav>
       </header>
 
-      {loading && <p>Načítám...</p>}
+      {loading && <LoadingMessage />}
       {error && <p className={styles.error}>Chyba: {error}</p>}
 
       {!loading && !error && events.length === 0 && (

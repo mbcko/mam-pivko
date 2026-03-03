@@ -20,6 +20,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import styles from "./EventForm.module.css";
 import MapySearchField from "./MapySearchField.jsx";
+import LoadingMessage from "./LoadingMessage.jsx";
 
 const EMPTY_PUB = { name: "", address: "", notes: "", url: "", mapy_lon: null, mapy_lat: null, mapy_label: "" };
 const ORGANIZERS = ["MaSaK", "mbcko", "schunka"];
@@ -162,7 +163,7 @@ export default function EventForm() {
   function pickFromWishlist(item) {
     setForm((f) => ({
       ...f,
-      pubs: [...f.pubs, newPub({ name: item.name, address: item.address, notes: item.notes, url: item.url })],
+      pubs: [...f.pubs, newPub({ name: item.name, address: item.address, notes: item.notes, url: item.url, mapy_lon: item.mapy_lon, mapy_lat: item.mapy_lat, mapy_label: item.mapy_label })],
     }));
     setWishlist((w) => w.filter((i) => i._id !== item._id));
     api.deleteWishlistItem(item._id).catch(() => {});
@@ -233,7 +234,7 @@ export default function EventForm() {
     }
   }
 
-  if (loading) return <div className="page"><p>Načítám...</p></div>;
+  if (loading) return <div className="page"><LoadingMessage /></div>;
 
   return (
     <div className="page">

@@ -5,6 +5,7 @@ import EventPubMap from "./EventPubMap.jsx";
 import MapyLink from "./MapyLink.jsx";
 import MapySearchField from "./MapySearchField.jsx";
 import styles from "./WishlistPage.module.css";
+import LoadingMessage from "./LoadingMessage.jsx";
 
 const EMPTY_FORM = { name: "", address: "", notes: "", url: "", mapy_lon: null, mapy_lat: null, mapy_label: "" };
 
@@ -135,7 +136,7 @@ export default function WishlistPage() {
         </div>
       )}
 
-      {loading && <p>Načítám...</p>}
+      {loading && <LoadingMessage />}
 
       {!loading && !error && items.length === 0 && !showAddForm && (
         <p className={styles.empty}>Wishlist je prázdný. Přidej hospody, které chcete navštívit!</p>

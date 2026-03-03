@@ -5,6 +5,7 @@ import { formatDateLong } from "../utils/format.js";
 import styles from "./EventDetail.module.css";
 import EventPubMap from "./EventPubMap.jsx";
 import MapyLink from "./MapyLink.jsx";
+import LoadingMessage from "./LoadingMessage.jsx";
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -27,7 +28,7 @@ export default function EventDetail() {
     navigate("/");
   }
 
-  if (loading) return <div className="page"><p>Načítám...</p></div>;
+  if (loading) return <div className="page"><LoadingMessage /></div>;
   if (error) return <div className="page"><p className={styles.error}>Chyba: {error}</p></div>;
   if (!event) return null;
 
