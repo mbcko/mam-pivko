@@ -10,10 +10,7 @@ import LoadingMessage from "./LoadingMessage.jsx";
 
 function buildCalendarUrl(event, members) {
   const title = event.name || `MAM Pivko — ${event.organizer}`;
-  const dateStr = event.date.replace(/-/g, "");
-  const nextDay = new Date(event.date);
-  nextDay.setDate(nextDay.getDate() + 1);
-  const nextDateStr = nextDay.toISOString().slice(0, 10).replace(/-/g, "");
+  const dateStr = event.date.slice(0, 10).replace(/-/g, "");
   const details = event.pubs
     .map((p, i) => `${i + 1}. ${p.name}${p.address ? ` — ${p.address}` : ""}`)
     .join("\n");
@@ -22,7 +19,8 @@ function buildCalendarUrl(event, members) {
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: title,
-    dates: `${dateStr}/${nextDateStr}`,
+    dates: `${dateStr}T170000/${dateStr}T230000`,
+    ctz: "Europe/Prague",
     details,
     location,
   });
