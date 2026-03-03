@@ -14,7 +14,7 @@ function pubLabel(n) {
 }
 
 export default function EventList() {
-  const { user, login, logout } = useAuth();
+  const { user, login, logout, authError } = useAuth();
   const [events, setEvents] = useState([]);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -53,6 +53,7 @@ export default function EventList() {
           ) : (
             <GoogleLogin onSuccess={login} onError={() => {}} size="medium" shape="pill" />
           )}
+          {authError && <p className={styles.authError}>{authError}</p>}
         </nav>
       </header>
 

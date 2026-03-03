@@ -15,12 +15,22 @@ function decodeJwt(token) {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [members, setMembers] = useState([]);
+  const [authError, setAuthError] = useState(null);
 
-  function handleCredential(credential) {
-    const payload = decodeJwt(credential);
+  async function handleCredential(credential) {
     api.setToken(credential);
-    setUser({ email: payload.email, name: payload.name, picture: payload.picture });
-    api.listMembers().then(setMembers).catch(() => {});
+    try {
+      const membersList = await api.listMembers();
+      const payload = decodeJwt(credential);
+      setUser({ email: payload.email, name: payload.name, picture: payload.picture });
+      setMembers(membersList);
+      setAuthError(null);
+    } catch (e) {
+      api.setToken(null);
+      if (e.message.startsWith("403")) {
+        setAuthError("Přístup zamítnut — tvůj účet není v seznamu povolených uživatelů.");
+      }
+    }
   }
 
   useGoogleOneTapLogin({
@@ -38,10 +48,11 @@ export function AuthProvider({ children }) {
     api.setToken(null);
     setUser(null);
     setMembers([]);
+    setAuthError(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, members, login, logout }}>
+    <AuthContext.Provider value={{ user, members, authError, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
