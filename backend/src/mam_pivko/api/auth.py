@@ -10,7 +10,7 @@ _bearer = HTTPBearer()
 
 def require_auth(credentials: HTTPAuthorizationCredentials = Depends(_bearer)) -> str:
     try:
-        idinfo: dict[str, object] = id_token.verify_oauth2_token(
+        idinfo: dict[str, object] = id_token.verify_oauth2_token(  # type: ignore[no-untyped-call]
             credentials.credentials,
             google_requests.Request(),
             settings.google_client_id,
