@@ -15,7 +15,11 @@ def list_items(db: Database = Depends(get_db)) -> list[WishlistItem]:  # type: i
 
 
 @router.post("", response_model=WishlistItem, status_code=201)
-def create_item(data: WishlistItemCreate, db: Database = Depends(get_db), _: str = Depends(require_auth)) -> WishlistItem:  # type: ignore[type-arg]
+def create_item(
+    data: WishlistItemCreate,
+    db: Database = Depends(get_db),  # type: ignore[type-arg]
+    _: str = Depends(require_auth),
+) -> WishlistItem:
     return wishlist_service.create_item(db, data)
 
 
@@ -29,7 +33,10 @@ def get_item(item_id: str, db: Database = Depends(get_db)) -> WishlistItem:  # t
 
 @router.put("/{item_id}", response_model=WishlistItem)
 def update_item(
-    item_id: str, data: WishlistItemUpdate, db: Database = Depends(get_db), _: str = Depends(require_auth)  # type: ignore[type-arg]
+    item_id: str,
+    data: WishlistItemUpdate,
+    db: Database = Depends(get_db),  # type: ignore[type-arg]
+    _: str = Depends(require_auth),
 ) -> WishlistItem:
     item = wishlist_service.update_item(db, item_id, data)
     if item is None:
@@ -38,7 +45,11 @@ def update_item(
 
 
 @router.delete("/{item_id}", status_code=204)
-def delete_item(item_id: str, db: Database = Depends(get_db), _: str = Depends(require_auth)) -> None:  # type: ignore[type-arg]
+def delete_item(
+    item_id: str,
+    db: Database = Depends(get_db),  # type: ignore[type-arg]
+    _: str = Depends(require_auth),
+) -> None:
     deleted = wishlist_service.delete_item(db, item_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Item not found")
