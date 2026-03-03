@@ -35,7 +35,8 @@ export function AuthProvider({ children }) {
 
   useGoogleOneTapLogin({
     onSuccess: (res) => handleCredential(res.credential),
-    onError: () => {},
+    onError: () => console.warn("[OneTap] error"),
+    onNotification: (n) => console.info("[OneTap]", n.getMomentType(), n.getNotDisplayedReason() ?? n.getSkippedReason() ?? n.getDismissedReason() ?? ""),
     auto_select: true,
   });
 
