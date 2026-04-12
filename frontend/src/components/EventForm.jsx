@@ -36,7 +36,7 @@ const EMPTY_FORM = {
   notes: "",
 };
 
-function SortablePubRow({ id, index, pub, totalPubs, onSetField, onRemove, onSetMapy, onClearMapy }) {
+function SortablePubRow({ id, index, pub, totalPubs, onSetField, onRemove, onReturnToWishlist, onSetMapy, onClearMapy }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   return (
@@ -82,6 +82,14 @@ function SortablePubRow({ id, index, pub, totalPubs, onSetField, onRemove, onSet
           onClear={onClearMapy}
         />
       </div>
+      <button
+        type="button"
+        className={styles.toWishlistBtn}
+        onClick={onReturnToWishlist}
+        title="Vrátit do wishlistu"
+      >
+        ⭐
+      </button>
       <button
         type="button"
         className={styles.removeBtn}
@@ -172,6 +180,26 @@ export default function EventForm() {
 
   function removePub(index) {
     setForm((f) => ({ ...f, pubs: f.pubs.filter((_, i) => i !== index) }));
+  }
+
+  async function returnToWishlist(index) {
+    const pub = form.pubs[index];
+    if (!pub.name.trim()) return;
+    const item = await api.createWishlistItem({
+      name: pub.name,
+      address: pub.address,
+      notes: pub.notes,
+      url: pub.url,
+      mapy_lon: pub.mapy_lon,
+      mapy_lat: pub.mapy_lat,
+      mapy_label: pub.mapy_label,
+    });
+    setWishlist((w) => [item, ...w]);
+    if (form.pubs.length > 1) {
+      setForm((f) => ({ ...f, pubs: f.pubs.filter((_, i) => i !== index) }));
+    } else {
+      setForm((f) => ({ ...f, pubs: [newPub()] }));
+    }
   }
 
   function handleDragEnd({ active, over }) {
@@ -307,6 +335,7 @@ export default function EventForm() {
                   totalPubs={form.pubs.length}
                   onSetField={(field, value) => setPub(i, field, value)}
                   onRemove={() => removePub(i)}
+                  onReturnToWishlist={() => returnToWishlist(i)}
                   onSetMapy={(pos) => setMapyPub(i, pos)}
                   onClearMapy={() => clearMapyPub(i)}
                 />
