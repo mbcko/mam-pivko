@@ -4,99 +4,67 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MAM Pivko is a pub crawl planner for a group of friends. The group organizes regular evenings called "MAM Pivko" — typically a "tour de beer" through a neighborhood, starting with dinner at one pub and moving through several more during the evening. The organizer (rotating responsibility) plans the evening by selecting a starting pub and a route of subsequent pubs. The app also maintains an editable archive of past events.
+MAM Pivko is a pub crawl planner for a group of friends. The group organizes regular evenings called "MAM Pivko", usually a route through several pubs. The app maintains an editable archive of past events and a wishlist of pubs to visit.
 
 **Repository:** [github.com/mbcko/mam-pivko](https://github.com/mbcko/mam-pivko)
 
 ## Stack
 
-- **Backend:** Python 3.12 + FastAPI + Motor (async MongoDB driver) + Pydantic v2
-- **Database:** MongoDB Atlas
+- **API:** Cloudflare Worker, TypeScript
+- **Database:** Cloudflare D1
 - **Frontend:** React 19 + Vite, deployed as GitHub Pages
-- **Hosting:** Backend on Koyeb (app: `mam-pivko`, service: `mam-pivko`)
-- **Package manager:** uv (recommended) or pip
+- **Package manager:** npm
 
 ## Repository Layout
 
-```
+```text
 mam-pivko/
-├── backend/
-│   ├── src/mam_pivko/
-│   │   ├── main.py               # uvicorn entry point
-│   │   ├── config.py             # Settings (pydantic-settings, env prefix MAM_)
-│   │   ├── db.py                 # Motor client, lifespan hook
-│   │   ├── api/
-│   │   │   ├── app.py            # create_app() factory, CORS, lifespan
-│   │   │   ├── events.py         # /api/v1/events — CRUD endpoints
-│   │   │   └── health.py         # GET /health
-│   │   ├── models/
-│   │   │   └── event.py          # Pydantic: Pub, Event, EventCreate, EventUpdate
-│   │   └── services/
-│   │       └── event_service.py  # Motor DB operations
-│   ├── tests/
-│   │   ├── conftest.py           # pytest fixtures, local MongoDB test DB
-│   │   └── test_events.py        # CRUD endpoint tests (httpx AsyncClient)
-│   ├── pyproject.toml
-│   ├── Makefile
-│   ├── Procfile                  # For Koyeb: web: uvicorn ... --port $PORT
-│   └── .env.example
+├── backend-worker/
+│   ├── src/index.ts             # Worker API entry point
+│   ├── migrations/              # D1 schema migrations
+│   ├── wrangler.jsonc           # Worker and D1 binding config
+│   ├── CLOUDFLARE.md            # Deployment notes
+│   └── package.json
 ├── frontend/
 │   ├── index.html
-│   ├── vite.config.js            # base: '/mam-pivko/'
+│   ├── vite.config.js
 │   ├── src/
 │   │   ├── main.jsx
-│   │   ├── App.jsx               # React Router routes
-│   │   ├── api.js                # fetch wrapper (VITE_API_BASE_URL)
+│   │   ├── App.jsx
+│   │   ├── api.js
 │   │   └── components/
-│   │       ├── EventList.jsx     # Homepage — list of events
-│   │       ├── EventDetail.jsx   # Event detail + delete
-│   │       └── EventForm.jsx     # Create / edit form with pub ordering
 │   └── package.json
-└── .github/
-    └── workflows/
-        ├── backend.yml           # lint → type-check → test (on push to main)
-        └── pages.yml             # npm build → deploy GitHub Pages (on push to main)
+└── .github/workflows/
+    ├── backend.yml              # Worker typecheck and deploy
+    └── pages.yml                # Frontend build and GitHub Pages deploy
 ```
 
-## Backend Commands
+## Worker Commands
 
-```bash
-# Install dependencies
-cd backend
-uv sync
+```sh
+cd backend-worker
+npm install
+npm run typecheck
+npm run dev
+npm run deploy
+```
 
-# Install in development mode (alternative)
-pip install -e ".[dev]"
+Apply D1 migrations:
 
-# Run tests
-pytest
-
-# Run single test file
-pytest tests/test_events.py
-
-# Run with coverage
-pytest --cov=mam_pivko
-
-# Linting
-ruff check src/
-
-# Type checking
-mypy src/
-
-# Makefile shortcuts
-make run        # Start server locally with hot reload on :8000
-make test-cov   # Run tests with coverage
-make lint       # Run ruff
+```sh
+cd backend-worker
+npx wrangler d1 migrations apply mam-pivko --local
+npx wrangler d1 migrations apply mam-pivko --remote
 ```
 
 ## Frontend Commands
 
-```bash
+```sh
 cd frontend
 npm install
-npm run dev      # Vite dev server
-npm run build    # Production build → dist/
-npm run preview  # Preview production build
+npm run dev
+npm run build
+npm run preview
 ```
 
 ## API Endpoints
@@ -109,18 +77,26 @@ npm run preview  # Preview production build
 | GET | `/api/v1/events/{id}` | Get single event |
 | PUT | `/api/v1/events/{id}` | Full update event |
 | DELETE | `/api/v1/events/{id}` | Delete event |
+| GET | `/api/v1/wishlist` | List wishlist items |
+| POST | `/api/v1/wishlist` | Create wishlist item |
+| GET | `/api/v1/wishlist/{id}` | Get wishlist item |
+| PUT | `/api/v1/wishlist/{id}` | Full update wishlist item |
+| DELETE | `/api/v1/wishlist/{id}` | Delete wishlist item |
+| GET | `/api/v1/members` | List allowed members for authenticated users |
 
 ## Configuration
 
-**Backend env vars (`backend/.env.example`):**
-- `MAM_MONGODB_URI` — MongoDB Atlas connection string (required)
-- `MAM_MONGODB_DB` — Database name (default: `mam_pivko`)
-- `MAM_CORS_ORIGINS` — Allowed CORS origins, comma-separated (include GitHub Pages URL)
-- `MAM_ENV` — `development` | `production` (default: `development`)
+**Worker variables:**
 
-**Frontend env vars:**
-- `VITE_API_BASE_URL` — Backend URL (default: `http://localhost:8000`)
-  - Set as a GitHub Actions variable `VITE_API_BASE_URL` for Pages deploy
+- `MAM_CORS_ORIGINS` - allowed CORS origins, comma-separated
+- `MAM_GOOGLE_CLIENT_ID` - Google OAuth client ID
+- `MAM_ALLOWED_EMAILS` - comma-separated allowed member emails
+
+**Frontend variables:**
+
+- `VITE_API_BASE_URL` - Worker API URL
+- `VITE_MAPY_API_KEY` - Mapy.cz API key
+- `VITE_GOOGLE_CLIENT_ID` - Google OAuth client ID
 
 ## Language Note
 
@@ -129,23 +105,6 @@ npm run preview  # Preview production build
 
 ## Deployment
 
-### Backend — Koyeb
+The Worker deploy is handled by `.github/workflows/backend.yml` on pushes to `main` that touch `backend-worker/` or the workflow. The workflow installs dependencies, runs the Worker typecheck, applies D1 migrations, and deploys the Worker.
 
-**App:** `mam-pivko` | **Service:** `mam-pivko`
-**Deploy trigger:** Push to `main` via Koyeb GitHub integration
-**Start command:** `uvicorn mam_pivko.main:app --host 0.0.0.0 --port $PORT`
-
-Required Koyeb environment variables:
-- `MAM_MONGODB_URI`, `MAM_MONGODB_DB`, `MAM_CORS_ORIGINS`, `MAM_ENV=production`
-
-### Frontend — GitHub Pages
-
-**URL:** `https://mbcko.github.io/mam-pivko/`
-**Workflow:** `.github/workflows/pages.yml` — builds on push to `main`, deploys via `actions/deploy-pages`
-**Required GitHub Actions variable:** `VITE_API_BASE_URL` (set in repo Settings → Variables → Actions)
-
-### GitHub Actions — Backend CI
-
-`.github/workflows/backend.yml` — runs on push to `main` and PRs touching `backend/`:
-- Spins up local MongoDB service container
-- Runs: ruff lint → mypy → pytest with coverage
+The frontend deploy is handled by `.github/workflows/pages.yml` and publishes to GitHub Pages.

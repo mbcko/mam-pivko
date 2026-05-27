@@ -2,8 +2,6 @@
 
 The Cloudflare deployment target is a TypeScript Worker that keeps the existing backend HTTP API and stores production data in Cloudflare D1.
 
-The Python backend remains in `backend/` as the legacy/reference implementation and test suite. Production traffic should use the Worker.
-
 ## D1 setup
 
 Create the production database once:
@@ -30,27 +28,6 @@ npx wrangler d1 migrations apply mam-pivko --local
 npm run dev
 ```
 
-## Migrating Atlas data
-
-The one-time export helper reads the old Atlas `events` and `wishlist` collections and writes a SQL import file for D1. It intentionally creates new UUID primary keys while preserving the API response field name `_id`.
-
-Run it before deleting the Atlas secret:
-
-```sh
-cd backend-worker
-MAM_MONGODB_URI="mongodb+srv://..." MAM_MONGODB_DB="mam_pivko" \
-  npx -p mongodb node scripts/export-atlas-to-d1-sql.mjs d1-import.sql
-```
-
-Inspect `d1-import.sql`, import it locally first, then import remotely:
-
-```sh
-npx wrangler d1 execute mam-pivko --local --file d1-import.sql
-npx wrangler d1 execute mam-pivko --remote --file d1-import.sql
-```
-
-Existing bookmarked Mongo ObjectId URLs will not resolve after cutover because D1 records receive new UUIDs.
-
 ## GitHub Actions configuration
 
 Add these in GitHub under repository `Settings` -> `Secrets and variables` -> `Actions` -> `Secrets`:
@@ -65,12 +42,6 @@ Add these under `Settings` -> `Secrets and variables` -> `Actions` -> `Variables
 - `MAM_CORS_ORIGINS`: comma-separated frontend origins.
 
 The deploy workflow runs `npm ci`, typechecks the Worker, applies D1 migrations, and deploys with only plaintext Worker variables.
-
-After cutover, remove the old MongoDB configuration:
-
-- GitHub secret `MAM_MONGODB_URI`
-- Cloudflare Worker secret `MAM_MONGODB_URI`
-- GitHub/Cloudflare variable `MAM_MONGODB_DB`
 
 ## Frontend switch
 
