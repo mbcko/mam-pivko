@@ -59,6 +59,8 @@ interface WishlistRow {
 }
 
 const googleJwks = createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));
+const EVENT_COLUMNS = "id, name, date, organizer, pubs_json, notes, created_at, updated_at";
+const WISHLIST_COLUMNS = "id, name, address, notes, url, mapy_lon, mapy_lat, mapy_label, created_at";
 
 function allowedOrigins(env: Env): string[] {
   return (env.MAM_CORS_ORIGINS || "").split(",").map((origin) => origin.trim()).filter(Boolean);
@@ -220,22 +222,16 @@ async function requireAuth(request: Request, env: Env): Promise<string | Respons
 }
 
 async function getEvent(env: Env, id: string): Promise<EventRow | null> {
-  return env.DB.prepare(
-    "SELECT id, name, date, organizer, pubs_json, notes, created_at, updated_at FROM events WHERE id = ?"
-  ).bind(id).first<EventRow>();
+  return env.DB.prepare(`SELECT ${EVENT_COLUMNS} FROM events WHERE id = ?`).bind(id).first<EventRow>();
 }
 
 async function getWishlistItem(env: Env, id: string): Promise<WishlistRow | null> {
-  return env.DB.prepare(
-    "SELECT id, name, address, notes, url, mapy_lon, mapy_lat, mapy_label, created_at FROM wishlist WHERE id = ?"
-  ).bind(id).first<WishlistRow>();
+  return env.DB.prepare(`SELECT ${WISHLIST_COLUMNS} FROM wishlist WHERE id = ?`).bind(id).first<WishlistRow>();
 }
 
 async function handleEvents(request: Request, env: Env, parts: string[]): Promise<Response> {
   if (request.method === "GET" && parts.length === 0) {
-    const { results } = await env.DB.prepare(
-      "SELECT id, name, date, organizer, pubs_json, notes, created_at, updated_at FROM events ORDER BY date DESC"
-    ).all<EventRow>();
+    const { results } = await env.DB.prepare(`SELECT ${EVENT_COLUMNS} FROM events ORDER BY date DESC`).all<EventRow>();
     return json(request, env, results.map(serializeEvent));
   }
 
@@ -306,7 +302,7 @@ async function handleEvents(request: Request, env: Env, parts: string[]): Promis
 async function handleWishlist(request: Request, env: Env, parts: string[]): Promise<Response> {
   if (request.method === "GET" && parts.length === 0) {
     const { results } = await env.DB.prepare(
-      "SELECT id, name, address, notes, url, mapy_lon, mapy_lat, mapy_label, created_at FROM wishlist ORDER BY created_at DESC"
+      `SELECT ${WISHLIST_COLUMNS} FROM wishlist ORDER BY created_at DESC`
     ).all<WishlistRow>();
     return json(request, env, results.map(serializeWishlistItem));
   }
