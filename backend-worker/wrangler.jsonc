@@ -1,13 +1,20 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "mam-pivko-api",
-  "main": "src/index.ts",
-  "compatibility_date": "2026-05-27",
-  "compatibility_flags": ["nodejs_compat"],
-  "observability": {
-    "enabled": true
-  },
-  "vars": {
-    "MAM_MONGODB_DB": "mam_pivko"
-  }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "mam-pivko-api",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-05-27",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"observability": {
+		"enabled": true
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "mam-pivko",
+			"database_id": "8197b391-8c56-4350-acbe-a130b526bfe5",
+			"migrations_dir": "migrations"
+		}
+	]
 }

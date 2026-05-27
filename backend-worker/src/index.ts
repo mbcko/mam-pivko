@@ -1,9 +1,7 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
-import { MongoClient, ObjectId, type Collection, type Db, type Document } from "mongodb";
 
 interface Env {
-  MAM_MONGODB_URI?: string;
-  MAM_MONGODB_DB?: string;
+  DB: D1Database;
   MAM_CORS_ORIGINS?: string;
   MAM_GOOGLE_CLIENT_ID?: string;
   MAM_ALLOWED_EMAILS?: string;
@@ -37,23 +35,30 @@ interface WishlistInput {
   mapy_label?: string;
 }
 
+interface EventRow {
+  id: string;
+  name: string;
+  date: string;
+  organizer: string;
+  pubs_json: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface WishlistRow {
+  id: string;
+  name: string;
+  address: string;
+  notes: string;
+  url: string;
+  mapy_lon: number | null;
+  mapy_lat: number | null;
+  mapy_label: string;
+  created_at: string;
+}
+
 const googleJwks = createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));
-let clientPromise: Promise<MongoClient> | undefined;
-
-async function db(env: Env): Promise<Db> {
-  if (!env.MAM_MONGODB_URI) {
-    throw new Error("MAM_MONGODB_URI is not configured");
-  }
-  if (!clientPromise) {
-    clientPromise = new MongoClient(env.MAM_MONGODB_URI).connect();
-  }
-  const client = await clientPromise;
-  return client.db(env.MAM_MONGODB_DB || "mam_pivko");
-}
-
-function collection<T extends Document>(database: Db, name: string): Collection<T> {
-  return database.collection<T>(name);
-}
 
 function allowedOrigins(env: Env): string[] {
   return (env.MAM_CORS_ORIGINS || "").split(",").map((origin) => origin.trim()).filter(Boolean);
@@ -98,20 +103,6 @@ function empty(request: Request, env: Env, init: ResponseInit = {}): Response {
   });
 }
 
-function serialize(value: unknown): unknown {
-  if (value instanceof ObjectId) return value.toHexString();
-  if (value instanceof Date) return value.toISOString();
-  if (Array.isArray(value)) return value.map(serialize);
-  if (value && typeof value === "object") {
-    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, serialize(entry)]));
-  }
-  return value;
-}
-
-function objectId(id: string): ObjectId | null {
-  return ObjectId.isValid(id) ? new ObjectId(id) : null;
-}
-
 async function readJson<T>(request: Request): Promise<T> {
   try {
     return await request.json<T>();
@@ -120,18 +111,77 @@ async function readJson<T>(request: Request): Promise<T> {
   }
 }
 
-function eventPayload(input: EventInput, timestamps: Partial<Record<"created_at" | "updated_at", Date>>) {
+function isoDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Response("Invalid date", { status: 400 });
+  }
+  return date.toISOString();
+}
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+function normalizePub(pub: Pub): Pub {
   return {
-    name: input.name || "",
-    date: new Date(input.date),
-    organizer: input.organizer,
-    pubs: input.pubs || [],
-    notes: input.notes || "",
-    ...timestamps
+    name: pub.name,
+    address: pub.address || "",
+    notes: pub.notes || "",
+    url: pub.url || "",
+    mapy_lon: pub.mapy_lon ?? null,
+    mapy_lat: pub.mapy_lat ?? null,
+    mapy_label: pub.mapy_label || ""
   };
 }
 
-function wishlistPayload(input: WishlistInput, timestamps: Partial<Record<"created_at", Date>>) {
+function parsePubs(value: string): Pub[] {
+  try {
+    const pubs = JSON.parse(value);
+    return Array.isArray(pubs) ? pubs : [];
+  } catch {
+    return [];
+  }
+}
+
+function serializeEvent(row: EventRow) {
+  return {
+    _id: row.id,
+    name: row.name,
+    date: row.date,
+    organizer: row.organizer,
+    pubs: parsePubs(row.pubs_json),
+    notes: row.notes,
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
+function serializeWishlistItem(row: WishlistRow) {
+  return {
+    _id: row.id,
+    name: row.name,
+    address: row.address,
+    notes: row.notes,
+    url: row.url,
+    mapy_lon: row.mapy_lon,
+    mapy_lat: row.mapy_lat,
+    mapy_label: row.mapy_label,
+    created_at: row.created_at
+  };
+}
+
+function eventValues(input: EventInput) {
+  return {
+    name: input.name || "",
+    date: isoDate(input.date),
+    organizer: input.organizer,
+    pubs_json: JSON.stringify((input.pubs || []).map(normalizePub)),
+    notes: input.notes || ""
+  };
+}
+
+function wishlistValues(input: WishlistInput) {
   return {
     name: input.name,
     address: input.address || "",
@@ -139,8 +189,7 @@ function wishlistPayload(input: WishlistInput, timestamps: Partial<Record<"creat
     url: input.url || "",
     mapy_lon: input.mapy_lon ?? null,
     mapy_lat: input.mapy_lat ?? null,
-    mapy_label: input.mapy_label || "",
-    ...timestamps
+    mapy_label: input.mapy_label || ""
   };
 }
 
@@ -170,52 +219,84 @@ async function requireAuth(request: Request, env: Env): Promise<string | Respons
   }
 }
 
-async function handleEvents(request: Request, env: Env, parts: string[]): Promise<Response> {
-  const database = await db(env);
-  const events = collection(database, "events");
+async function getEvent(env: Env, id: string): Promise<EventRow | null> {
+  return env.DB.prepare(
+    "SELECT id, name, date, organizer, pubs_json, notes, created_at, updated_at FROM events WHERE id = ?"
+  ).bind(id).first<EventRow>();
+}
 
+async function getWishlistItem(env: Env, id: string): Promise<WishlistRow | null> {
+  return env.DB.prepare(
+    "SELECT id, name, address, notes, url, mapy_lon, mapy_lat, mapy_label, created_at FROM wishlist WHERE id = ?"
+  ).bind(id).first<WishlistRow>();
+}
+
+async function handleEvents(request: Request, env: Env, parts: string[]): Promise<Response> {
   if (request.method === "GET" && parts.length === 0) {
-    const docs = await events.find().sort({ date: -1 }).toArray();
-    return json(request, env, serialize(docs));
+    const { results } = await env.DB.prepare(
+      "SELECT id, name, date, organizer, pubs_json, notes, created_at, updated_at FROM events ORDER BY date DESC"
+    ).all<EventRow>();
+    return json(request, env, results.map(serializeEvent));
   }
 
   if (request.method === "POST" && parts.length === 0) {
     const auth = await requireAuth(request, env);
     if (auth instanceof Response) return auth;
-    const now = new Date();
-    const payload = eventPayload(await readJson<EventInput>(request), { created_at: now, updated_at: now });
-    const result = await events.insertOne(payload);
-    const doc = await events.findOne({ _id: result.insertedId });
-    return json(request, env, serialize(doc), { status: 201 });
+    const id = crypto.randomUUID();
+    const timestamp = nowIso();
+    const payload = eventValues(await readJson<EventInput>(request));
+    await env.DB.prepare(
+      `INSERT INTO events (id, name, date, organizer, pubs_json, notes, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      id,
+      payload.name,
+      payload.date,
+      payload.organizer,
+      payload.pubs_json,
+      payload.notes,
+      timestamp,
+      timestamp
+    ).run();
+    const row = await getEvent(env, id);
+    return json(request, env, row ? serializeEvent(row) : null, { status: 201 });
   }
 
-  const id = parts[0] ? objectId(parts[0]) : null;
-  if (!id) return json(request, env, { detail: "Event not found" }, { status: 404 });
+  const id = parts[0] || "";
 
   if (request.method === "GET" && parts.length === 1) {
-    const doc = await events.findOne({ _id: id });
-    if (!doc) return json(request, env, { detail: "Event not found" }, { status: 404 });
-    return json(request, env, serialize(doc));
+    const row = await getEvent(env, id);
+    if (!row) return json(request, env, { detail: "Event not found" }, { status: 404 });
+    return json(request, env, serializeEvent(row));
   }
 
   if (request.method === "PUT" && parts.length === 1) {
     const auth = await requireAuth(request, env);
     if (auth instanceof Response) return auth;
-    const payload = eventPayload(await readJson<EventInput>(request), { updated_at: new Date() });
-    const result = await events.findOneAndUpdate(
-      { _id: id },
-      { $set: payload },
-      { returnDocument: "after" }
-    );
-    if (!result) return json(request, env, { detail: "Event not found" }, { status: 404 });
-    return json(request, env, serialize(result));
+    const payload = eventValues(await readJson<EventInput>(request));
+    await env.DB.prepare(
+      `UPDATE events
+       SET name = ?, date = ?, organizer = ?, pubs_json = ?, notes = ?, updated_at = ?
+       WHERE id = ?`
+    ).bind(
+      payload.name,
+      payload.date,
+      payload.organizer,
+      payload.pubs_json,
+      payload.notes,
+      nowIso(),
+      id
+    ).run();
+    const row = await getEvent(env, id);
+    if (!row) return json(request, env, { detail: "Event not found" }, { status: 404 });
+    return json(request, env, serializeEvent(row));
   }
 
   if (request.method === "DELETE" && parts.length === 1) {
     const auth = await requireAuth(request, env);
     if (auth instanceof Response) return auth;
-    const result = await events.deleteOne({ _id: id });
-    if (result.deletedCount !== 1) return json(request, env, { detail: "Event not found" }, { status: 404 });
+    const result = await env.DB.prepare("DELETE FROM events WHERE id = ?").bind(id).run();
+    if (result.meta.changes !== 1) return json(request, env, { detail: "Event not found" }, { status: 404 });
     return empty(request, env, { status: 204 });
   }
 
@@ -223,50 +304,72 @@ async function handleEvents(request: Request, env: Env, parts: string[]): Promis
 }
 
 async function handleWishlist(request: Request, env: Env, parts: string[]): Promise<Response> {
-  const database = await db(env);
-  const wishlist = collection(database, "wishlist");
-
   if (request.method === "GET" && parts.length === 0) {
-    const docs = await wishlist.find().sort({ created_at: -1 }).toArray();
-    return json(request, env, serialize(docs));
+    const { results } = await env.DB.prepare(
+      "SELECT id, name, address, notes, url, mapy_lon, mapy_lat, mapy_label, created_at FROM wishlist ORDER BY created_at DESC"
+    ).all<WishlistRow>();
+    return json(request, env, results.map(serializeWishlistItem));
   }
 
   if (request.method === "POST" && parts.length === 0) {
     const auth = await requireAuth(request, env);
     if (auth instanceof Response) return auth;
-    const payload = wishlistPayload(await readJson<WishlistInput>(request), { created_at: new Date() });
-    const result = await wishlist.insertOne(payload);
-    const doc = await wishlist.findOne({ _id: result.insertedId });
-    return json(request, env, serialize(doc), { status: 201 });
+    const id = crypto.randomUUID();
+    const payload = wishlistValues(await readJson<WishlistInput>(request));
+    await env.DB.prepare(
+      `INSERT INTO wishlist (id, name, address, notes, url, mapy_lon, mapy_lat, mapy_label, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      id,
+      payload.name,
+      payload.address,
+      payload.notes,
+      payload.url,
+      payload.mapy_lon,
+      payload.mapy_lat,
+      payload.mapy_label,
+      nowIso()
+    ).run();
+    const row = await getWishlistItem(env, id);
+    return json(request, env, row ? serializeWishlistItem(row) : null, { status: 201 });
   }
 
-  const id = parts[0] ? objectId(parts[0]) : null;
-  if (!id) return json(request, env, { detail: "Item not found" }, { status: 404 });
+  const id = parts[0] || "";
 
   if (request.method === "GET" && parts.length === 1) {
-    const doc = await wishlist.findOne({ _id: id });
-    if (!doc) return json(request, env, { detail: "Item not found" }, { status: 404 });
-    return json(request, env, serialize(doc));
+    const row = await getWishlistItem(env, id);
+    if (!row) return json(request, env, { detail: "Item not found" }, { status: 404 });
+    return json(request, env, serializeWishlistItem(row));
   }
 
   if (request.method === "PUT" && parts.length === 1) {
     const auth = await requireAuth(request, env);
     if (auth instanceof Response) return auth;
-    const payload = wishlistPayload(await readJson<WishlistInput>(request), {});
-    const result = await wishlist.findOneAndUpdate(
-      { _id: id },
-      { $set: payload },
-      { returnDocument: "after" }
-    );
-    if (!result) return json(request, env, { detail: "Item not found" }, { status: 404 });
-    return json(request, env, serialize(result));
+    const payload = wishlistValues(await readJson<WishlistInput>(request));
+    await env.DB.prepare(
+      `UPDATE wishlist
+       SET name = ?, address = ?, notes = ?, url = ?, mapy_lon = ?, mapy_lat = ?, mapy_label = ?
+       WHERE id = ?`
+    ).bind(
+      payload.name,
+      payload.address,
+      payload.notes,
+      payload.url,
+      payload.mapy_lon,
+      payload.mapy_lat,
+      payload.mapy_label,
+      id
+    ).run();
+    const row = await getWishlistItem(env, id);
+    if (!row) return json(request, env, { detail: "Item not found" }, { status: 404 });
+    return json(request, env, serializeWishlistItem(row));
   }
 
   if (request.method === "DELETE" && parts.length === 1) {
     const auth = await requireAuth(request, env);
     if (auth instanceof Response) return auth;
-    const result = await wishlist.deleteOne({ _id: id });
-    if (result.deletedCount !== 1) return json(request, env, { detail: "Item not found" }, { status: 404 });
+    const result = await env.DB.prepare("DELETE FROM wishlist WHERE id = ?").bind(id).run();
+    if (result.meta.changes !== 1) return json(request, env, { detail: "Item not found" }, { status: 404 });
     return empty(request, env, { status: 204 });
   }
 

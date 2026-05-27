@@ -1,15 +1,61 @@
 # Cloudflare Worker Deployment
 
-The Cloudflare deployment target is a TypeScript Worker that keeps the existing backend HTTP API and talks directly to MongoDB Atlas with the MongoDB Node.js driver.
+The Cloudflare deployment target is a TypeScript Worker that keeps the existing backend HTTP API and stores production data in Cloudflare D1.
 
-The Python backend remains in `backend/` as the reference implementation and test suite. It is not used by Cloudflare Workers because Python Workers cannot currently package `pymongo`.
+The Python backend remains in `backend/` as the legacy/reference implementation and test suite. Production traffic should use the Worker.
+
+## D1 setup
+
+Create the production database once:
+
+```sh
+cd backend-worker
+npx wrangler d1 create mam-pivko
+```
+
+Paste the returned `database_id` into `wrangler.jsonc` under the `DB` binding.
+
+Apply migrations:
+
+```sh
+npx wrangler d1 migrations apply mam-pivko --remote
+```
+
+For local development, Wrangler creates and uses a local D1 database automatically:
+
+```sh
+cd backend-worker
+npm install
+npx wrangler d1 migrations apply mam-pivko --local
+npm run dev
+```
+
+## Migrating Atlas data
+
+The one-time export helper reads the old Atlas `events` and `wishlist` collections and writes a SQL import file for D1. It intentionally creates new UUID primary keys while preserving the API response field name `_id`.
+
+Run it before deleting the Atlas secret:
+
+```sh
+cd backend-worker
+MAM_MONGODB_URI="mongodb+srv://..." MAM_MONGODB_DB="mam_pivko" \
+  npx -p mongodb node scripts/export-atlas-to-d1-sql.mjs d1-import.sql
+```
+
+Inspect `d1-import.sql`, import it locally first, then import remotely:
+
+```sh
+npx wrangler d1 execute mam-pivko --local --file d1-import.sql
+npx wrangler d1 execute mam-pivko --remote --file d1-import.sql
+```
+
+Existing bookmarked Mongo ObjectId URLs will not resolve after cutover because D1 records receive new UUIDs.
 
 ## GitHub Actions configuration
 
-Add this in GitHub under repository `Settings` -> `Secrets and variables` -> `Actions` -> `Secrets`:
+Add these in GitHub under repository `Settings` -> `Secrets and variables` -> `Actions` -> `Secrets`:
 
-- `CLOUDFLARE_API_TOKEN`: an API token scoped to deploy Workers for this account.
-- `MAM_MONGODB_URI`: the Atlas connection string, including the dedicated Worker database username and password.
+- `CLOUDFLARE_API_TOKEN`: an API token scoped to deploy Workers and edit/manage D1 for this account.
 
 Add these under `Settings` -> `Secrets and variables` -> `Actions` -> `Variables`:
 
@@ -18,52 +64,13 @@ Add these under `Settings` -> `Secrets and variables` -> `Actions` -> `Variables
 - `MAM_ALLOWED_EMAILS`: comma-separated allowed member emails.
 - `MAM_CORS_ORIGINS`: comma-separated frontend origins.
 
-Create the token in Cloudflare Dashboard -> `Account API tokens` -> `Create Token` -> custom token with the `Edit Cloudflare Workers` policy, scoped to the account that owns this Worker.
+The deploy workflow runs `npm ci`, typechecks the Worker, applies D1 migrations, and deploys with only plaintext Worker variables.
 
-## Cloudflare runtime config
+After cutover, remove the old MongoDB configuration:
 
-The GitHub Actions deploy job passes `MAM_MONGODB_URI` to `wrangler deploy` as a Cloudflare Worker secret.
-
-The deploy job passes these GitHub Actions variables to `wrangler deploy` as Cloudflare Worker plaintext variables:
-
-- `MAM_GOOGLE_CLIENT_ID`
-- `MAM_ALLOWED_EMAILS`
-- `MAM_CORS_ORIGINS`
-
-You can also manage them manually in Cloudflare Dashboard -> `Workers & Pages` -> `mam-pivko-api` -> `Settings` -> `Variables and Secrets`.
-
-`MAM_MONGODB_DB` is configured as a plaintext var in `wrangler.jsonc` because the database name is not sensitive. Change it there if production uses a different DB name.
-
-## MongoDB Atlas setup
-
-Atlas must allow inbound connections from Cloudflare Workers. If your Atlas cluster currently only allows Koyeb egress IPs, the Worker will fail to connect even with the correct connection string.
-
-Cloudflare documents that outbound TCP socket connections are sourced from a prefix that is not part of the public Cloudflare IP range list. For Atlas, the practical options are to open Atlas Network Access broadly, or use a separate controlled egress/proxy architecture.
-
-If using `0.0.0.0/0` in Atlas Network Access, create a dedicated database user for this Worker:
-
-- Go to Atlas `Database Access`.
-- Add a new password user, for example `mam-pivko-worker`.
-- Use a long generated password.
-- Grant only `readWrite` on the `mam_pivko` database.
-- Do not grant `Atlas admin`, `Project owner`, `readWriteAnyDatabase`, or admin database roles.
-- Put that user and password in the `MAM_MONGODB_URI` GitHub Actions secret.
-
-The URI should point at the existing Atlas cluster and database user, for example:
-
-```txt
-mongodb+srv://mam-pivko-worker:<password>@<cluster-host>/?retryWrites=true&w=majority&appName=mam-pivko
-```
-
-## Local development
-
-Create `backend-worker/.dev.vars` from `.dev.vars.example`, then run:
-
-```sh
-cd backend-worker
-npm install
-npm run dev
-```
+- GitHub secret `MAM_MONGODB_URI`
+- Cloudflare Worker secret `MAM_MONGODB_URI`
+- GitHub/Cloudflare variable `MAM_MONGODB_DB`
 
 ## Frontend switch
 

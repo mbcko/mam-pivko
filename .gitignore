@@ -26,5 +26,8 @@ node_modules/
 frontend/dist/
 .wrangler/
 
+# Generated data migration files
+backend-worker/d1-import.sql
+
 # OS
 .DS_Store
