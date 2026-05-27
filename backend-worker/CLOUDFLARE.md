@@ -20,16 +20,16 @@ Add these under `Settings` -> `Secrets and variables` -> `Actions` -> `Variables
 
 Create the token in Cloudflare Dashboard -> `Account API tokens` -> `Create Token` -> custom token with the `Edit Cloudflare Workers` policy, scoped to the account that owns this Worker.
 
-## Cloudflare runtime variables and secrets
+## Cloudflare runtime variables
 
-The GitHub Actions deploy job syncs these GitHub Actions variables into Cloudflare Worker secrets after each deploy:
+The GitHub Actions deploy job passes these GitHub Actions variables to `wrangler deploy` as Cloudflare Worker plaintext variables:
 
 - `MAM_MONGODB_URI`
 - `MAM_GOOGLE_CLIENT_ID`
 - `MAM_ALLOWED_EMAILS`
 - `MAM_CORS_ORIGINS`
 
-You can also manage them manually in Cloudflare Dashboard -> `Workers & Pages` -> `mam-pivko-api` -> `Settings` -> `Variables and Secrets`.
+You can also manage them manually in Cloudflare Dashboard -> `Workers & Pages` -> `mam-pivko-api` -> `Settings` -> `Variables and Secrets` as plaintext variables.
 
 `MAM_MONGODB_DB` is configured as a plaintext var in `wrangler.jsonc` because the database name is not sensitive. Change it there if production uses a different DB name.
 
@@ -38,16 +38,6 @@ You can also manage them manually in Cloudflare Dashboard -> `Workers & Pages` -
 Atlas must allow inbound connections from Cloudflare Workers. If your Atlas cluster currently only allows Koyeb egress IPs, the Worker will fail to connect even with the correct connection string.
 
 Cloudflare documents that outbound TCP socket connections are sourced from a prefix that is not part of the public Cloudflare IP range list. For Atlas, the practical options are to open Atlas Network Access broadly, or use a separate controlled egress/proxy architecture.
-
-The same secrets can also be set locally with Wrangler:
-
-```sh
-cd backend-worker
-npx wrangler secret put MAM_MONGODB_URI
-npx wrangler secret put MAM_GOOGLE_CLIENT_ID
-npx wrangler secret put MAM_ALLOWED_EMAILS
-npx wrangler secret put MAM_CORS_ORIGINS
-```
 
 ## Local development
 
