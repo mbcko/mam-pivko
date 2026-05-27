@@ -7,9 +7,6 @@
   "observability": {
     "enabled": true
   },
-  "limits": {
-    "subrequests": 1000
-  },
   "vars": {
     "MAM_MONGODB_DB": "mam_pivko"
   }
