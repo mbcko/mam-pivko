@@ -4,12 +4,15 @@ The Cloudflare deployment target is a TypeScript Worker that keeps the existing 
 
 The Python backend remains in `backend/` as the reference implementation and test suite. It is not used by Cloudflare Workers because Python Workers cannot currently package `pymongo`.
 
-## GitHub Actions secrets
+## GitHub Actions configuration
 
-Add these in GitHub under repository `Settings` -> `Secrets and variables` -> `Actions` -> `Secrets`:
+Add this in GitHub under repository `Settings` -> `Secrets and variables` -> `Actions` -> `Secrets`:
+
+- `CLOUDFLARE_API_TOKEN`: an API token scoped to deploy Workers for this account.
+
+Add these under `Settings` -> `Secrets and variables` -> `Actions` -> `Variables`:
 
 - `CLOUDFLARE_ACCOUNT_ID`: your Cloudflare account ID.
-- `CLOUDFLARE_API_TOKEN`: an API token scoped to deploy Workers for this account.
 - `MAM_MONGODB_URI`: the Atlas connection string.
 - `MAM_GOOGLE_CLIENT_ID`: the Google OAuth client ID used by the frontend.
 - `MAM_ALLOWED_EMAILS`: comma-separated allowed member emails.
@@ -19,7 +22,7 @@ Create the token in Cloudflare Dashboard -> `Account API tokens` -> `Create Toke
 
 ## Cloudflare runtime variables and secrets
 
-The GitHub Actions deploy job syncs these GitHub Secrets into Cloudflare Worker secrets after each deploy:
+The GitHub Actions deploy job syncs these GitHub Actions variables into Cloudflare Worker secrets after each deploy:
 
 - `MAM_MONGODB_URI`
 - `MAM_GOOGLE_CLIENT_ID`
