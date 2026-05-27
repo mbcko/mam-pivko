@@ -89,7 +89,7 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          MAM_MONGODB_URI: ${{ vars.MAM_MONGODB_URI }}
+          MAM_MONGODB_URI: ${{ secrets.MAM_MONGODB_URI }}
           MAM_GOOGLE_CLIENT_ID: ${{ vars.MAM_GOOGLE_CLIENT_ID }}
           MAM_ALLOWED_EMAILS: ${{ vars.MAM_ALLOWED_EMAILS }}
           MAM_CORS_ORIGINS: ${{ vars.MAM_CORS_ORIGINS }}
@@ -105,13 +105,21 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          MAM_MONGODB_URI: ${{ vars.MAM_MONGODB_URI }}
+          MAM_MONGODB_URI: ${{ secrets.MAM_MONGODB_URI }}
           MAM_GOOGLE_CLIENT_ID: ${{ vars.MAM_GOOGLE_CLIENT_ID }}
           MAM_ALLOWED_EMAILS: ${{ vars.MAM_ALLOWED_EMAILS }}
           MAM_CORS_ORIGINS: ${{ vars.MAM_CORS_ORIGINS }}
         run: |
+          trap 'rm -f /tmp/wrangler-secrets.json' EXIT
+          node <<'EOF'
+          const fs = require("node:fs");
+          fs.writeFileSync(
+            "/tmp/wrangler-secrets.json",
+            JSON.stringify({ MAM_MONGODB_URI: process.env.MAM_MONGODB_URI }),
+          );
+          EOF
           npx wrangler deploy \
-            --var "MAM_MONGODB_URI:$MAM_MONGODB_URI" \
+            --secrets-file /tmp/wrangler-secrets.json \
             --var "MAM_GOOGLE_CLIENT_ID:$MAM_GOOGLE_CLIENT_ID" \
             --var "MAM_ALLOWED_EMAILS:$MAM_ALLOWED_EMAILS" \
             --var "MAM_CORS_ORIGINS:$MAM_CORS_ORIGINS"
