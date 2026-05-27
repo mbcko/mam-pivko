@@ -1,0 +1,5 @@
+MAM_MONGODB_URI="mongodb+srv://user:password@example.mongodb.net/?retryWrites=true&w=majority"
+MAM_MONGODB_DB="mam_pivko"
+MAM_CORS_ORIGINS="http://localhost:5173,https://your-frontend.example.com"
+MAM_GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
+MAM_ALLOWED_EMAILS="person@example.com,other@example.com"

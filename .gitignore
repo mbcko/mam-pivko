@@ -11,6 +11,7 @@ build/
 # Env files
 .env
 .env.local
+.dev.vars
 
 # Test / coverage
 .pytest_cache/
@@ -23,6 +24,7 @@ htmlcov/
 # Node
 node_modules/
 frontend/dist/
+.wrangler/
 
 # OS
 .DS_Store

@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mam-pivko-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-27",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "MAM_MONGODB_DB": "mam_pivko"
+  }
+}
