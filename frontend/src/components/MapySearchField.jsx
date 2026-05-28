@@ -1,6 +1,4 @@
 import { useRef, useState } from "react";
-import styles from "./MapySearchField.module.css";
-
 const API_KEY = import.meta.env.VITE_MAPY_API_KEY;
 
 // lon/lat/label — current linked POI (null = not linked)
@@ -53,9 +51,9 @@ export default function MapySearchField({ lon, lat, label, onLink, onClear }) {
 
   if (lon != null) {
     return (
-      <div className={styles.linked}>
+      <div className="mapy-suggest">
         <span>📍 {label || "Propojeno s Mapy.cz"}</span>
-        <button type="button" onClick={onClear} className={styles.unlink} title="Zrušit propojení">
+        <button type="button" onClick={onClear} className="x" title="Zrušit propojení">
           ✕
         </button>
       </div>
@@ -63,21 +61,21 @@ export default function MapySearchField({ lon, lat, label, onLink, onClear }) {
   }
 
   return (
-    <div className={styles.search}>
+    <div className="mapy-search">
       <input
         type="text"
-        placeholder="🔍 Vyhledat na Mapy.cz..."
+        placeholder="Vyhledat na Mapy.cz..."
         value={query}
         onChange={handleChange}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        className={styles.input}
+        className="input input-search"
       />
       {open && results.length > 0 && (
-        <ul className={styles.suggest}>
+        <ul className="mapy-suggest-list">
           {results.map((item, i) => (
             <li key={i} onMouseDown={() => handleSelect(item)}>
-              <div className={styles.suggestName}>{item.name}</div>
-              <div className={styles.suggestLoc}>{item.location}</div>
+              <div className="mapy-suggest-name">{item.name}</div>
+              <div className="mapy-suggest-loc">{item.location}</div>
             </li>
           ))}
         </ul>

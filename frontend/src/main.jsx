@@ -4,6 +4,8 @@ import { HashRouter } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "./AuthContext.jsx";
 import App from "./App.jsx";
+import "./design/ds/colors_and_type.css";
+import "./design/app.css";
 import "./index.css";
 
 createRoot(document.getElementById("root")).render(

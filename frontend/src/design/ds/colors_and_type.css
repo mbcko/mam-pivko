@@ -1,0 +1,303 @@
+/* ============================================================
+ * Heureka Design System — Core 6.0
+ * Colors & Typography tokens.
+ * Derived from the Heureka Group "Core 6.0" Figma file.
+ * ============================================================ */
+
+/* ----- Fonts ----- */
+/* Source Sans Pro — brand-uploaded WOFF2/WOFF served locally. Latin + latin-ext covers CZ/SK/HU/RO/SI/HR. */
+@font-face {
+  font-family: "Source Sans Pro"; font-style: normal; font-weight: 300; font-display: swap;
+  src: url("fonts/source-sans-pro-latin-300-normal.woff2") format("woff2"),
+       url("fonts/source-sans-pro-latin-300-normal.woff") format("woff");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Source Sans Pro"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("fonts/source-sans-pro-latin-400-normal.woff2") format("woff2"),
+       url("fonts/source-sans-pro-latin-400-normal.woff") format("woff");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Source Sans Pro"; font-style: italic; font-weight: 400; font-display: swap;
+  src: url("fonts/source-sans-pro-latin-400-italic.woff2") format("woff2"),
+       url("fonts/source-sans-pro-latin-400-italic.woff") format("woff");
+}
+@font-face {
+  font-family: "Source Sans Pro"; font-style: normal; font-weight: 600; font-display: swap;
+  src: url("fonts/source-sans-pro-latin-600-normal.woff2") format("woff2"),
+       url("fonts/source-sans-pro-latin-600-normal.woff") format("woff");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Source Sans Pro"; font-style: normal; font-weight: 700; font-display: swap;
+  src: url("fonts/source-sans-pro-latin-700-normal.woff2") format("woff2"),
+       url("fonts/source-sans-pro-latin-700-normal.woff") format("woff");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Source Sans Pro"; font-style: normal; font-weight: 900; font-display: swap;
+  src: url("fonts/source-sans-pro-latin-900-normal.woff2") format("woff2"),
+       url("fonts/source-sans-pro-latin-900-normal.woff") format("woff");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext (ě, š, č, ř, ž, ý, á, ů, ő, ű, ă, î, â, ș, ț, ć, đ, ...) */
+@font-face {
+  font-family: "Source Sans Pro"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("fonts/source-sans-pro-latin-ext-400-normal.woff2") format("woff2"),
+       url("fonts/source-sans-pro-latin-ext-400-normal.woff") format("woff");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Source Sans Pro"; font-style: normal; font-weight: 600; font-display: swap;
+  src: url("fonts/source-sans-pro-latin-ext-600-normal.woff2") format("woff2"),
+       url("fonts/source-sans-pro-latin-ext-600-normal.woff") format("woff");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Source Sans Pro"; font-style: normal; font-weight: 700; font-display: swap;
+  src: url("fonts/source-sans-pro-latin-ext-700-normal.woff2") format("woff2"),
+       url("fonts/source-sans-pro-latin-ext-700-normal.woff") format("woff");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Cyrillic (BG, RS) */
+@font-face {
+  font-family: "Source Sans Pro"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("fonts/source-sans-pro-cyrillic-400-normal.woff2") format("woff2"),
+       url("fonts/source-sans-pro-cyrillic-400-normal.woff") format("woff");
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: "Source Sans Pro"; font-style: normal; font-weight: 700; font-display: swap;
+  src: url("fonts/source-sans-pro-cyrillic-700-normal.woff2") format("woff2"),
+       url("fonts/source-sans-pro-cyrillic-700-normal.woff") format("woff");
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+:root {
+  /* ============ BRAND / PRODUCT COLORS ============ */
+
+  /* Heureka blue — the primary brand color */
+  --colorBrandPrimary-700: #001029;
+  --colorBrandPrimary-650: #001d47;
+  --colorBrandPrimary-600: #002966;
+  --colorBrandPrimary-500: #0054a3;   /* dark mode primary */
+  --colorBrandPrimary-400: #0084e0;
+  --colorBrandPrimary-300: #0098cd;   /* Heureka Blue — the signature */
+  --colorBrandPrimary-250: #0096ff;
+  --colorBrandPrimary-200: #47d0ff;
+  --colorBrandPrimary-150: #aee8ff;
+  --colorBrandPrimary-100: #ebfaff;
+
+  /* Heureka orange — secondary / accent (the exclamation-mark dot) */
+  --colorBrandSecondary-700: #291800;
+  --colorBrandSecondary-650: #472700;
+  --colorBrandSecondary-600: #663500;
+  --colorBrandSecondary-500: #a34900;
+  --colorBrandSecondary-400: #e05400;
+  --colorBrandSecondary-300: #ff660a; /* Heureka Orange */
+  --colorBrandSecondary-200: #ffc2ad;
+  --colorBrandSecondary-150: #ffd5cc;
+  --colorBrandSecondary-100: #ffedeb;
+
+  /* ============ SEMANTIC ============ */
+
+  /* Success / green */
+  --colorGreen-700: #002925;
+  --colorGreen-650: #004740;
+  --colorGreen-600: #006657;
+  --colorGreen-500: #00a380;
+  --colorGreen-400: #00e0a8;
+  --colorGreen-300: #33ffbe;
+  --colorGreen-200: #adffe0;
+  --colorGreen-150: #ccffe8;
+  --colorGreen-100: #ebfffa;
+
+  /* Error / red */
+  --colorRed-700: #290800;
+  --colorRed-650: #470c00;
+  --colorRed-600: #660e00;
+  --colorRed-500: #a30b00;
+  --colorRed-400: #e00000;
+  --colorRed-300: #dc0032;   /* Heureka red — action/sale */
+  --colorRed-200: #ffadb8;
+  --colorRed-150: #ffccd6;
+  --colorRed-100: #ffebf0;
+
+  /* Caution / yellow */
+  --colorYellow-700: #292100;
+  --colorYellow-650: #473900;
+  --colorYellow-600: #665200;
+  --colorYellow-500: #a38300;
+  --colorYellow-400: #e0b400;
+  --colorYellow-300: #ffd633;
+  --colorYellow-200: #ffefad;
+  --colorYellow-150: #fff5cc;
+  --colorYellow-100: #fffbeb;
+
+  /* ============ HEUREKA GROUP B2B PRODUCTS ============ */
+
+  /* Heureka Shops — indigo/violet */
+  --colorHeurekaShops-700: #040326;
+  --colorHeurekaShops-650: #060842;
+  --colorHeurekaShops-600: #080b5e;
+  --colorHeurekaShops-500: #0c1c97;
+  --colorHeurekaShops-400: #1132d0;
+  --colorHeurekaShops-300: #426ef0;
+  --colorHeurekaShops-200: #b4c9f9;
+  --colorHeurekaShops-150: #d0e0fb;
+  --colorHeurekaShops-100: #ecf4fd;
+
+  /* Heureka Ads — red scale (same as error) */
+  --colorHeurekaAds-500: #a30b00;
+  --colorHeurekaAds-400: #e00000;
+  --colorHeurekaAds-300: #ff3341;
+  --colorHeurekaAds-100: #ffebf0;
+
+  /* Heureka Insights — greens (same as success) */
+  --colorHeurekaInsights-500: #00a380;
+  --colorHeurekaInsights-400: #00e0a8;
+  --colorHeurekaInsights-300: #33ffbe;
+  --colorHeurekaInsights-100: #ebfffa;
+
+  /* ============ GREYSCALE ============ */
+  --colorGrey-700: #1a1a1a;
+  --colorGrey-650: #242424;
+  --colorGrey-600: #333333;
+  --colorGrey-500: #525252;
+  --colorGrey-450: #737373;
+  --colorGrey-400: #707070;
+  --colorGrey-300: #999999;
+  --colorGrey-200: #d6d6d6;
+  --colorGrey-150: #e6e6e6;
+  --colorGrey-100: #f5f5f5;
+  --colorGrey-50:  #fafafa;
+  --colorWhite:    #ffffff;
+  --colorBlack:    #000000;
+
+  /* Extra neutrals observed in components */
+  --colorNeutral-border:   #ebebeb;
+  --colorNeutral-border2:  #d1d1d1;
+  --colorNeutral-bg-soft:  #f4f4f4;
+  --colorSurface-canvas:   #fcfcff;   /* the design canvas bg */
+  --colorSurface-canvas-border: #e2e2ec;
+
+  /* ============ SEMANTIC ROLES (USE THESE IN COMPONENTS) ============ */
+  --color-bg:        #ffffff;
+  --color-bg-muted:  var(--colorGrey-100);
+  --color-bg-canvas: var(--colorSurface-canvas);
+
+  --color-fg:        var(--colorGrey-700);       /* headline body */
+  --color-fg-muted:  var(--colorGrey-500);       /* secondary */
+  --color-fg-subtle: var(--colorGrey-400);       /* tertiary */
+  --color-fg-inverse: var(--colorWhite);
+
+  --color-border:         var(--colorNeutral-border);
+  --color-border-strong:  var(--colorGrey-200);
+  --color-border-focus:   var(--colorBrandPrimary-400);
+
+  --color-primary:        var(--colorBrandPrimary-300);
+  --color-primary-hover:  var(--colorBrandPrimary-500);
+  --color-primary-fg:     var(--colorWhite);
+
+  --color-accent:         var(--colorBrandSecondary-300);   /* the "!" orange */
+  --color-accent-fg:      var(--colorWhite);
+
+  --color-action:         var(--colorRed-300);              /* sale / price / buy */
+  --color-action-hover:   #b5002a;
+  --color-action-fg:      var(--colorWhite);
+
+  --color-success:        var(--colorGreen-500);
+  --color-warn:           var(--colorYellow-500);
+  --color-danger:         var(--colorRed-400);
+  --color-info:           var(--colorBrandPrimary-300);
+
+  /* Overlays */
+  --overlay-scrim:  rgba(26, 26, 26, 0.72);
+  --overlay-linear: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%);
+
+  /* Shadows (from Figma component specs) */
+  --shadow-primary-btn: 0 4px 8px 0 rgba(0, 152, 205, 0.24);    /* blue primary */
+  --shadow-accent-btn:  0 4px 8px 0 rgba(230, 106, 0, 0.24);    /* orange */
+  --shadow-card:        0 4px 12px 0 rgba(163, 163, 163, 0.2);
+  --shadow-card-hover:  0 8px 24px 0 rgba(163, 163, 163, 0.28);
+  --shadow-popover:     0 12px 32px 0 rgba(26, 26, 26, 0.16);
+
+  /* ============ RADII ============ */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;    /* the default button/card radius */
+  --radius-lg: 12px;   /* swatches, larger surfaces */
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* ============ SPACING (4px base, as observed in specs) ============ */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* ============ TYPOGRAPHY ============ */
+  --font-primary: "Source Sans Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-b2b:     "Inter", system-ui, sans-serif;          /* used in some B2B product surfaces */
+  --font-mono:    ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* Heureka type scale — named by Greek letters (as in Figma) */
+  /* sizes in px / line-height unitless 1.35 */
+  --type-alpha-size:   45px;   /* display / page hero */
+  --type-beta-size:    30px;   /* h1 */
+  --type-gamma-size:   23px;   /* h2 */
+  --type-delta-size:   19px;   /* h3 */
+  --type-epsilon-size: 17px;   /* h4 / lead */
+  --type-base-size:    15px;   /* body */
+  --type-milli-size:   13px;   /* small */
+  --type-micro-size:   11px;   /* caption */
+  --type-lh: 1.35;
+
+  /* Weights */
+  --fw-regular: 400;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+}
+
+/* =================== BASE TYPE RESETS =================== */
+html, body {
+  font-family: var(--font-primary);
+  font-size: var(--type-base-size);
+  line-height: var(--type-lh);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* =================== SEMANTIC TYPE CLASSES =================== */
+.type-alpha,  h1.display { font-family: var(--font-primary); font-weight: 700; font-size: var(--type-alpha-size);   line-height: var(--type-lh); color: var(--color-fg); letter-spacing: -0.01em; }
+.type-beta,   h1         { font-family: var(--font-primary); font-weight: 700; font-size: var(--type-beta-size);    line-height: var(--type-lh); color: var(--color-fg); letter-spacing: -0.005em; }
+.type-gamma,  h2         { font-family: var(--font-primary); font-weight: 700; font-size: var(--type-gamma-size);   line-height: var(--type-lh); color: var(--color-fg); }
+.type-delta,  h3         { font-family: var(--font-primary); font-weight: 600; font-size: var(--type-delta-size);   line-height: var(--type-lh); color: var(--color-fg); }
+.type-epsilon,h4         { font-family: var(--font-primary); font-weight: 600; font-size: var(--type-epsilon-size); line-height: var(--type-lh); color: var(--color-fg); }
+.type-base,   p          { font-family: var(--font-primary); font-weight: 400; font-size: var(--type-base-size);    line-height: var(--type-lh); color: var(--color-fg); }
+.type-milli, small       { font-family: var(--font-primary); font-weight: 400; font-size: var(--type-milli-size);   line-height: var(--type-lh); color: var(--color-fg-muted); }
+.type-micro              { font-family: var(--font-primary); font-weight: 400; font-size: var(--type-micro-size);   line-height: var(--type-lh); color: var(--color-fg-muted); }
+
+/* Links — underlined and brand-blue by default */
+a, .type-link {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+a:hover, .type-link:hover { color: var(--color-primary-hover); }
+
+/* Prices / action numbers — optional utility */
+.type-price {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  color: var(--color-action);
+}
