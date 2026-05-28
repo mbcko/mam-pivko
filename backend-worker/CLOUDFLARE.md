@@ -39,7 +39,7 @@ Add these under `Settings` -> `Secrets and variables` -> `Actions` -> `Variables
 - `CLOUDFLARE_ACCOUNT_ID`: your Cloudflare account ID.
 - `MAM_GOOGLE_CLIENT_ID`: the Google OAuth client ID used by the frontend.
 - `MAM_ALLOWED_EMAILS`: comma-separated allowed member emails.
-- `MAM_CORS_ORIGINS`: comma-separated frontend origins.
+- `MAM_CORS_ORIGINS`: comma-separated frontend origins. Use origins only, not paths, for example `https://mbcko.github.io`.
 
 The deploy workflow runs `npm ci`, typechecks the Worker, applies D1 migrations, and deploys with only plaintext Worker variables.
 
@@ -50,3 +50,5 @@ After the Worker is deployed, set the frontend build variable `VITE_API_BASE_URL
 ```txt
 https://mam-pivko-api.<your-subdomain>.workers.dev
 ```
+
+The Worker uses an HttpOnly session cookie after Google login. Because the GitHub Pages frontend and Workers API are on different sites, production cookies are sent as `SameSite=None; Secure`; local HTTP development uses `SameSite=Lax`.

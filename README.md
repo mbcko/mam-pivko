@@ -67,9 +67,13 @@ npm run build
 | GET | `/api/v1/wishlist/:id` | Get wishlist item |
 | PUT | `/api/v1/wishlist/:id` | Update wishlist item |
 | DELETE | `/api/v1/wishlist/:id` | Delete wishlist item |
+| POST | `/api/v1/auth/google` | Create a session from a Google credential |
+| GET | `/api/v1/auth/me` | Get the current session user |
+| POST | `/api/v1/auth/logout` | Delete the current session |
 | GET | `/api/v1/members` | List allowed members for authenticated users |
 
-Write endpoints require a Google bearer token for an email listed in `MAM_ALLOWED_EMAILS`.
+Write endpoints require a session cookie for an email listed in `MAM_ALLOWED_EMAILS`.
+The frontend obtains that session by sending the Google login credential to `/api/v1/auth/google`.
 
 ## Deployment
 
@@ -81,6 +85,12 @@ Required GitHub Actions variables:
 - `MAM_GOOGLE_CLIENT_ID`
 - `MAM_ALLOWED_EMAILS`
 - `MAM_CORS_ORIGINS`
+
+For the current production frontend, `MAM_CORS_ORIGINS` should include the origin only:
+
+```txt
+https://mbcko.github.io
+```
 
 Required GitHub Actions secrets:
 

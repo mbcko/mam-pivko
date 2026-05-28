@@ -1,32 +1,45 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { googleLogout, useGoogleOneTapLogin } from "@react-oauth/google";
 import { api } from "./api.js";
 
 const AuthContext = createContext(null);
 
-function decodeJwt(token) {
-  try {
-    return JSON.parse(atob(token.split(".")[1]));
-  } catch {
-    return {};
-  }
-}
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [members, setMembers] = useState([]);
   const [authError, setAuthError] = useState(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
+
+  function applySession(session) {
+    setUser(session.user);
+    setMembers(session.members);
+    setAuthError(null);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    api.getSession()
+      .then((session) => {
+        if (!cancelled) applySession(session);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setUser(null);
+          setMembers([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setSessionChecked(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleCredential(credential) {
-    api.setToken(credential);
     try {
-      const membersList = await api.listMembers();
-      const payload = decodeJwt(credential);
-      setUser({ email: payload.email, name: payload.name, picture: payload.picture });
-      setMembers(membersList);
-      setAuthError(null);
+      applySession(await api.loginWithGoogle(credential));
     } catch (e) {
-      api.setToken(null);
       if (e.message.startsWith("403")) {
         setAuthError("Přístup zamítnut — tvůj účet není v seznamu povolených uživatelů.");
       }
@@ -38,15 +51,20 @@ export function AuthProvider({ children }) {
     onError: () => console.warn("[OneTap] error"),
     onNotification: (n) => console.info("[OneTap]", n.getMomentType(), n.getNotDisplayedReason() ?? n.getSkippedReason() ?? n.getDismissedReason() ?? ""),
     auto_select: true,
+    disabled: !sessionChecked || Boolean(user),
   });
 
   function login(credentialResponse) {
     handleCredential(credentialResponse.credential);
   }
 
-  function logout() {
+  async function logout() {
     googleLogout();
-    api.setToken(null);
+    try {
+      await api.logout();
+    } catch {
+      // Local logout should still clear UI state even if the network request fails.
+    }
     setUser(null);
     setMembers([]);
     setAuthError(null);

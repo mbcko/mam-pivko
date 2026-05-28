@@ -4,12 +4,6 @@ const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_RETRIES = 3;
 const RETRY_DELAYS_MS = [2_000, 5_000, 10_000];
 
-let _token = null;
-
-export function setToken(token) {
-  _token = token;
-}
-
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -17,7 +11,6 @@ function wait(ms) {
 async function request(method, path, body) {
   const headers = {};
   if (body) headers["Content-Type"] = "application/json";
-  if (_token) headers["Authorization"] = `Bearer ${_token}`;
 
   let lastError;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -29,6 +22,7 @@ async function request(method, path, body) {
         method,
         headers,
         body: body ? JSON.stringify(body) : undefined,
+        credentials: "include",
         signal: controller.signal,
       });
       clearTimeout(timer);
@@ -51,7 +45,9 @@ async function request(method, path, body) {
 }
 
 export const api = {
-  setToken,
+  loginWithGoogle: (credential) => request("POST", "/api/v1/auth/google", { credential }),
+  getSession: () => request("GET", "/api/v1/auth/me"),
+  logout: () => request("POST", "/api/v1/auth/logout"),
 
   listEvents: () => request("GET", "/api/v1/events"),
   getEvent: (id) => request("GET", `/api/v1/events/${id}`),

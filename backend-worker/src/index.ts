@@ -7,6 +7,10 @@ interface Env {
   MAM_ALLOWED_EMAILS?: string;
 }
 
+interface GoogleLoginInput {
+  credential?: string;
+}
+
 interface Pub {
   name: string;
   address?: string;
@@ -58,12 +62,24 @@ interface WishlistRow {
   created_at: string;
 }
 
+interface SessionRow {
+  id_hash: string;
+  email: string;
+  name: string;
+  picture: string;
+  expires_at: string;
+}
+
 const googleJwks = createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));
 const EVENT_COLUMNS = "id, name, date, organizer, pubs_json, notes, created_at, updated_at";
 const WISHLIST_COLUMNS = "id, name, address, notes, url, mapy_lon, mapy_lat, mapy_label, created_at";
+const SESSION_COOKIE = "mam_session";
+const SESSION_MAX_AGE_SECONDS = 14 * 24 * 60 * 60;
+const DEFAULT_CORS_ORIGINS = ["http://localhost:5173", "https://mbcko.github.io"];
 
 function allowedOrigins(env: Env): string[] {
-  return (env.MAM_CORS_ORIGINS || "").split(",").map((origin) => origin.trim()).filter(Boolean);
+  const configured = (env.MAM_CORS_ORIGINS || "").split(",").map((origin) => origin.trim()).filter(Boolean);
+  return configured.length > 0 ? configured : DEFAULT_CORS_ORIGINS;
 }
 
 function allowedEmails(env: Env): string[] {
@@ -73,12 +89,13 @@ function allowedEmails(env: Env): string[] {
 function corsHeaders(request: Request, env: Env): HeadersInit {
   const origin = request.headers.get("Origin") || "";
   const origins = allowedOrigins(env);
-  const allowOrigin = origins.includes("*") ? "*" : origins.includes(origin) ? origin : origins[0] || "*";
+  const allowOrigin = origins.includes(origin) ? origin : origins[0];
 
   return {
     "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
-    "Access-Control-Allow-Headers": "Authorization,Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Credentials": "true",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin"
   };
@@ -123,6 +140,70 @@ function isoDate(value: string): string {
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+function isAllowedOrigin(request: Request, env: Env): boolean {
+  const origin = request.headers.get("Origin");
+  return !origin || allowedOrigins(env).includes(origin);
+}
+
+function requireAllowedOrigin(request: Request, env: Env): Response | null {
+  if (isAllowedOrigin(request, env)) return null;
+  return json(request, env, { detail: "Origin not allowed" }, { status: 403 });
+}
+
+function parseCookies(request: Request): Record<string, string> {
+  const header = request.headers.get("Cookie") || "";
+  const cookies: Record<string, string> = {};
+  for (const part of header.split(";")) {
+    const [name, ...valueParts] = part.trim().split("=");
+    if (!name) continue;
+    cookies[name] = valueParts.join("=");
+  }
+  return cookies;
+}
+
+function base64Url(bytes: Uint8Array): string {
+  let value = "";
+  for (const byte of bytes) value += String.fromCharCode(byte);
+  return btoa(value).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function randomSessionToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return base64Url(bytes);
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function sessionCookie(request: Request, token: string, maxAgeSeconds: number): string {
+  const url = new URL(request.url);
+  const secureCrossSite = url.protocol === "https:";
+  const attributes = [
+    `${SESSION_COOKIE}=${token}`,
+    "HttpOnly",
+    secureCrossSite ? "Secure" : null,
+    secureCrossSite ? "SameSite=None" : "SameSite=Lax",
+    "Path=/",
+    `Max-Age=${maxAgeSeconds}`
+  ].filter(Boolean);
+  return attributes.join("; ");
+}
+
+function clearSessionCookie(request: Request): string {
+  return sessionCookie(request, "", 0);
+}
+
+function serializeUser(session: Pick<SessionRow, "email" | "name" | "picture">) {
+  return {
+    email: session.email,
+    name: session.name,
+    picture: session.picture
+  };
 }
 
 function normalizePub(pub: Pub): Pub {
@@ -195,16 +276,12 @@ function wishlistValues(input: WishlistInput) {
   };
 }
 
-async function requireAuth(request: Request, env: Env): Promise<string | Response> {
-  const authorization = request.headers.get("Authorization") || "";
-  const match = authorization.match(/^Bearer (.+)$/);
-  if (!match) return json(request, env, { detail: "Not authenticated" }, { status: 403 });
-
+async function verifyGoogleCredential(request: Request, env: Env, credential: string): Promise<SessionRow | Response> {
+  if (!env.MAM_GOOGLE_CLIENT_ID) {
+    return json(request, env, { detail: "Google client ID is not configured" }, { status: 500 });
+  }
   try {
-    if (!env.MAM_GOOGLE_CLIENT_ID) {
-      return json(request, env, { detail: "Google client ID is not configured" }, { status: 500 });
-    }
-    const result = await jwtVerify(match[1], googleJwks, {
+    const result = await jwtVerify(credential, googleJwks, {
       audience: env.MAM_GOOGLE_CLIENT_ID,
       issuer: ["https://accounts.google.com", "accounts.google.com"]
     });
@@ -215,10 +292,88 @@ async function requireAuth(request: Request, env: Env): Promise<string | Respons
     if (!allowedEmails(env).includes(email)) {
       return json(request, env, { detail: "Not authorized" }, { status: 403 });
     }
-    return email;
+    return {
+      id_hash: "",
+      email,
+      name: String(result.payload.name || ""),
+      picture: String(result.payload.picture || ""),
+      expires_at: ""
+    };
   } catch {
     return json(request, env, { detail: "Invalid token" }, { status: 401 });
   }
+}
+
+async function getSession(request: Request, env: Env): Promise<SessionRow | null> {
+  const token = parseCookies(request)[SESSION_COOKIE];
+  if (!token) return null;
+
+  const idHash = await sha256Hex(token);
+  const now = nowIso();
+  const session = await env.DB.prepare(
+    "SELECT id_hash, email, name, picture, expires_at FROM sessions WHERE id_hash = ? AND expires_at > ?"
+  ).bind(idHash, now).first<SessionRow>();
+
+  if (!session) return null;
+  await env.DB.prepare("UPDATE sessions SET last_seen_at = ? WHERE id_hash = ?").bind(now, idHash).run();
+  return session;
+}
+
+async function requireAuth(request: Request, env: Env): Promise<SessionRow | Response> {
+  const session = await getSession(request, env);
+  if (!session) return json(request, env, { detail: "Not authenticated" }, { status: 403 });
+  return session;
+}
+
+async function handleAuth(request: Request, env: Env, parts: string[]): Promise<Response> {
+  if (request.method === "POST" && parts[0] === "google" && parts.length === 1) {
+    const originError = requireAllowedOrigin(request, env);
+    if (originError) return originError;
+
+    const payload = await readJson<GoogleLoginInput>(request);
+    if (!payload.credential) {
+      return json(request, env, { detail: "Missing credential" }, { status: 400 });
+    }
+
+    const verified = await verifyGoogleCredential(request, env, payload.credential);
+    if (verified instanceof Response) return verified;
+
+    const token = randomSessionToken();
+    const idHash = await sha256Hex(token);
+    const timestamp = nowIso();
+    const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000).toISOString();
+    await env.DB.prepare("DELETE FROM sessions WHERE expires_at <= ?").bind(timestamp).run();
+    await env.DB.prepare(
+      `INSERT INTO sessions (id_hash, email, name, picture, created_at, last_seen_at, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(idHash, verified.email, verified.name, verified.picture, timestamp, timestamp, expiresAt).run();
+
+    return json(
+      request,
+      env,
+      { user: serializeUser(verified), members: allowedEmails(env) },
+      { headers: { "Set-Cookie": sessionCookie(request, token, SESSION_MAX_AGE_SECONDS) } }
+    );
+  }
+
+  if (request.method === "GET" && parts[0] === "me" && parts.length === 1) {
+    const session = await requireAuth(request, env);
+    if (session instanceof Response) return session;
+    return json(request, env, { user: serializeUser(session), members: allowedEmails(env) });
+  }
+
+  if (request.method === "POST" && parts[0] === "logout" && parts.length === 1) {
+    const originError = requireAllowedOrigin(request, env);
+    if (originError) return originError;
+
+    const token = parseCookies(request)[SESSION_COOKIE];
+    if (token) {
+      await env.DB.prepare("DELETE FROM sessions WHERE id_hash = ?").bind(await sha256Hex(token)).run();
+    }
+    return empty(request, env, { status: 204, headers: { "Set-Cookie": clearSessionCookie(request) } });
+  }
+
+  return json(request, env, { detail: "Not found" }, { status: 404 });
 }
 
 async function getEvent(env: Env, id: string): Promise<EventRow | null> {
@@ -236,6 +391,8 @@ async function handleEvents(request: Request, env: Env, parts: string[]): Promis
   }
 
   if (request.method === "POST" && parts.length === 0) {
+    const originError = requireAllowedOrigin(request, env);
+    if (originError) return originError;
     const auth = await requireAuth(request, env);
     if (auth instanceof Response) return auth;
     const id = crypto.randomUUID();
@@ -267,6 +424,8 @@ async function handleEvents(request: Request, env: Env, parts: string[]): Promis
   }
 
   if (request.method === "PUT" && parts.length === 1) {
+    const originError = requireAllowedOrigin(request, env);
+    if (originError) return originError;
     const auth = await requireAuth(request, env);
     if (auth instanceof Response) return auth;
     const payload = eventValues(await readJson<EventInput>(request));
@@ -289,6 +448,8 @@ async function handleEvents(request: Request, env: Env, parts: string[]): Promis
   }
 
   if (request.method === "DELETE" && parts.length === 1) {
+    const originError = requireAllowedOrigin(request, env);
+    if (originError) return originError;
     const auth = await requireAuth(request, env);
     if (auth instanceof Response) return auth;
     const result = await env.DB.prepare("DELETE FROM events WHERE id = ?").bind(id).run();
@@ -308,6 +469,8 @@ async function handleWishlist(request: Request, env: Env, parts: string[]): Prom
   }
 
   if (request.method === "POST" && parts.length === 0) {
+    const originError = requireAllowedOrigin(request, env);
+    if (originError) return originError;
     const auth = await requireAuth(request, env);
     if (auth instanceof Response) return auth;
     const id = crypto.randomUUID();
@@ -339,6 +502,8 @@ async function handleWishlist(request: Request, env: Env, parts: string[]): Prom
   }
 
   if (request.method === "PUT" && parts.length === 1) {
+    const originError = requireAllowedOrigin(request, env);
+    if (originError) return originError;
     const auth = await requireAuth(request, env);
     if (auth instanceof Response) return auth;
     const payload = wishlistValues(await readJson<WishlistInput>(request));
@@ -362,6 +527,8 @@ async function handleWishlist(request: Request, env: Env, parts: string[]): Prom
   }
 
   if (request.method === "DELETE" && parts.length === 1) {
+    const originError = requireAllowedOrigin(request, env);
+    if (originError) return originError;
     const auth = await requireAuth(request, env);
     if (auth instanceof Response) return auth;
     const result = await env.DB.prepare("DELETE FROM wishlist WHERE id = ?").bind(id).run();
@@ -390,6 +557,9 @@ export default {
       }
       if (parts[0] === "api" && parts[1] === "v1" && parts[2] === "wishlist") {
         return await handleWishlist(request, env, parts.slice(3));
+      }
+      if (parts[0] === "api" && parts[1] === "v1" && parts[2] === "auth") {
+        return await handleAuth(request, env, parts.slice(3));
       }
       if (request.method === "GET" && parts.join("/") === "api/v1/members") {
         const auth = await requireAuth(request, env);
