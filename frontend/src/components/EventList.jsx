@@ -66,13 +66,12 @@ function EventRow({ event, faded, onClick }) {
         </div>
         {event.pubs.length > 0 && (
           <div className="event-route-preview">
-            {event.pubs.slice(0, 3).map((pub, index) => (
+            {event.pubs.map((pub, index) => (
               <span className="route-preview-part" key={`${pub.name}-${index}`}>
                 {index > 0 && <span className="arrow">→</span>}
                 <span className="pub-pip">{pub.name}</span>
               </span>
             ))}
-            {event.pubs.length > 3 && <span className="arrow">+{event.pubs.length - 3}</span>}
           </div>
         )}
       </div>
