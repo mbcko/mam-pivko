@@ -99,3 +99,4 @@ Required GitHub Actions secrets:
 The frontend deploy workflow builds `frontend/` and publishes to GitHub Pages. Set `VITE_API_BASE_URL`, `VITE_MAPY_API_KEY`, and `VITE_GOOGLE_CLIENT_ID` as GitHub Actions variables for the frontend build.
 
 See [backend-worker/CLOUDFLARE.md](backend-worker/CLOUDFLARE.md) for Cloudflare-specific setup.
+
