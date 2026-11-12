@@ -10,7 +10,13 @@ import MapyLink from "./MapyLink.jsx";
 function buildCalendarUrl(event, members) {
   const title = eventTitle(event);
   const dateStr = event.date.slice(0, 10).replace(/-/g, "");
-  const details = [event.notes, "", ...event.pubs.map((p, i) => `${i + 1}. ${p.name}${p.address ? ` - ${p.address}` : ""}`)]
+  const details = [
+    event.notes,
+    "",
+    ...event.pubs.map((p, i) => `${i + 1}. ${p.name}${p.address ? ` - ${p.address}` : ""}`),
+    "",
+    `Detail trasy: ${window.location.href}`,
+  ]
     .filter(Boolean)
     .join("\n");
   const params = new URLSearchParams({
