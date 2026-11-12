@@ -852,7 +852,7 @@ body[data-density="compact"] .route-stop .pub-card { padding: 10px 12px; }
 .map-wrap.sticky-map {
   position: sticky;
   z-index: 10;
-  top: 53px;
+  top: 69px;
   box-shadow: 0 8px 24px rgba(76, 58, 24, 0.14);
 }
 .form-route-map { margin-bottom: 16px; }
