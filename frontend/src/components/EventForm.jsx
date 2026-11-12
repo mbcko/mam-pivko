@@ -21,6 +21,7 @@ import { api } from "../api.js";
 import { useAuth } from "../AuthContext.jsx";
 import { BackLink, Icon, LoginRequired, Modal } from "../design/Design.jsx";
 import { eventTitle } from "../design/helpers.js";
+import EventPubMap from "./EventPubMap.jsx";
 import MapySearchField from "./MapySearchField.jsx";
 
 const ORGANIZERS = ["MaSaK", "mbcko", "schunka"];
@@ -240,6 +241,10 @@ export default function EventForm() {
         </div>
 
         {error && <div className="error-banner">Chyba: {error}</div>}
+
+        <div className="map-wrap compact real-map sticky-map form-route-map">
+          <EventPubMap pubs={form.pubs} interactive />
+        </div>
 
         <div className="card" style={{ marginBottom: 16 }}>
           <div className="field">

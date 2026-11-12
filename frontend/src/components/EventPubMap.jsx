@@ -5,17 +5,44 @@ import styles from "./EventPubMap.module.css";
 
 const API_KEY = import.meta.env.VITE_MAPY_API_KEY;
 const MAX_ROUTE_STOPS = 17;
+const GEOCODE_DELAY_MS = 350;
+const geocodeResults = new Map();
+const geocodeRequests = new Map();
 
 async function geocodeAddress(query) {
-  try {
-    const url = `https://api.mapy.com/v1/geocode?query=${encodeURIComponent(query)}&lang=cs&limit=1&apikey=${API_KEY}`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.items?.[0]?.position ?? null;
-  } catch {
-    return null;
-  }
+  if (geocodeResults.has(query)) return geocodeResults.get(query);
+  if (geocodeRequests.has(query)) return geocodeRequests.get(query);
+
+  const request = (async () => {
+    try {
+      const url = `https://api.mapy.com/v1/geocode?query=${encodeURIComponent(query)}&lang=cs&limit=1&apikey=${API_KEY}`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.items?.[0]?.position ?? null;
+    } catch {
+      return null;
+    }
+  })().then((position) => {
+    geocodeResults.set(query, position);
+    geocodeRequests.delete(query);
+    return position;
+  });
+
+  geocodeRequests.set(query, request);
+  return request;
+}
+
+function getDirectPosition(pub) {
+  if (pub.mapy_lon == null || pub.mapy_lat == null) return null;
+  const lon = Number(pub.mapy_lon);
+  const lat = Number(pub.mapy_lat);
+  return Number.isFinite(lon) && Number.isFinite(lat) ? { lon, lat } : null;
+}
+
+function getGeocodeQuery(pub) {
+  if (!pub.address?.trim()) return null;
+  return [pub.name, pub.address].map((value) => value?.trim()).filter(Boolean).join(", ");
 }
 
 function buildMapUrl(positions) {
@@ -239,6 +266,13 @@ export default function EventPubMap({ pubs, interactive = false }) {
   const [positions, setPositions] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const previewButton = useRef(null);
+  const locationSignature = JSON.stringify(pubs.map((pub) => [
+    pub._id ?? "",
+    pub.name ?? "",
+    pub.address ?? "",
+    pub.mapy_lon ?? "",
+    pub.mapy_lat ?? "",
+  ]));
 
   function closeDialog() {
     setDialogOpen(false);
@@ -246,27 +280,50 @@ export default function EventPubMap({ pubs, interactive = false }) {
   }
 
   useEffect(() => {
-    if (!API_KEY || pubs.length === 0) return undefined;
-    let cancelled = false;
+    if (!API_KEY || pubs.length === 0) {
+      setPositions(null);
+      return undefined;
+    }
 
-    Promise.all(
-      pubs.map((pub) => {
-        if (pub.mapy_lon != null && pub.mapy_lat != null) {
-          return Promise.resolve({ lon: pub.mapy_lon, lat: pub.mapy_lat });
-        }
-        if (pub.address) {
-          return geocodeAddress(`${pub.name}, ${pub.address}`);
-        }
-        return Promise.resolve(null);
-      })
-    ).then((resolvedPositions) => {
-      if (!cancelled) setPositions(resolvedPositions);
+    let cancelled = false;
+    let geocodeTimer;
+    const pendingGeocodes = [];
+
+    const nextPositions = pubs.map((pub, index) => {
+      const directPosition = getDirectPosition(pub);
+      if (directPosition) return directPosition;
+
+      const query = getGeocodeQuery(pub);
+      if (!query) return null;
+      if (geocodeResults.has(query)) return geocodeResults.get(query);
+
+      pendingGeocodes.push({ index, query });
+      return null;
     });
+
+    // Reordering pubs or linking a Mapy.com result updates the preview immediately.
+    setPositions(nextPositions);
+
+    if (pendingGeocodes.length > 0) {
+      geocodeTimer = window.setTimeout(async () => {
+        const resolvedPositions = await Promise.all(
+          pendingGeocodes.map(({ query }) => geocodeAddress(query))
+        );
+
+        if (cancelled) return;
+        const positionsWithGeocodes = [...nextPositions];
+        pendingGeocodes.forEach(({ index }, resultIndex) => {
+          positionsWithGeocodes[index] = resolvedPositions[resultIndex];
+        });
+        setPositions(positionsWithGeocodes);
+      }, GEOCODE_DELAY_MS);
+    }
 
     return () => {
       cancelled = true;
+      window.clearTimeout(geocodeTimer);
     };
-  }, [pubs]);
+  }, [locationSignature]);
 
   if (!API_KEY || !positions) return null;
   if (!positions.some(Boolean)) return null;

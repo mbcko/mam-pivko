@@ -849,6 +849,13 @@ body[data-density="compact"] .route-stop .pub-card { padding: 10px 12px; }
 }
 .map-wrap.compact { aspect-ratio: 16 / 5; }
 .map-wrap.large { aspect-ratio: 16 / 9; }
+.map-wrap.sticky-map {
+  position: sticky;
+  z-index: 10;
+  top: 53px;
+  box-shadow: 0 8px 24px rgba(76, 58, 24, 0.14);
+}
+.form-route-map { margin-bottom: 16px; }
 .map-wrap .map-svg { width: 100%; height: 100%; display: block; }
 .map-wrap .credit {
   position: absolute;

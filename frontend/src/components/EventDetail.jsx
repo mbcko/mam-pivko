@@ -75,7 +75,7 @@ function RouteCards({ pubs }) {
 function RouteMapFirst({ pubs }) {
   return (
     <div className="route style-map">
-      <div className="map-wrap large real-map"><EventPubMap pubs={pubs} interactive /></div>
+      <div className="map-wrap large real-map sticky-map"><EventPubMap pubs={pubs} interactive /></div>
       <RouteTimeline pubs={pubs} />
     </div>
   );
@@ -162,7 +162,7 @@ export default function EventDetail() {
           {preferences.routeStyle === "cards" && <RouteCards pubs={event.pubs} />}
           {preferences.routeStyle === "timeline" && (
             <>
-              <div className="map-wrap compact real-map"><EventPubMap pubs={event.pubs} interactive /></div>
+              <div className="map-wrap compact real-map sticky-map"><EventPubMap pubs={event.pubs} interactive /></div>
               <RouteTimeline pubs={event.pubs} />
             </>
           )}
